@@ -3,16 +3,21 @@ import { BoxingSystem } from "@/game/systems/BoxingSystem";
 import type { Difficulty, TypingSnapshot } from "@/game/types/game.types";
 import { calculateAccuracy, calculateWpm } from "@/lib/scoring";
 import { ChallengeDeck } from "@/game/data/challenges";
+import { boxingOpponents, type BoxingOpponentId } from "@/game/data/boxingOpponents";
 export class BoxingSession extends GameSession {
   readonly boxing: BoxingSystem;
   private challenge = 0;
   private deck: ChallengeDeck;
   private baseline: TypingSnapshot;
-  constructor(difficulty: Difficulty, roundDuration: number) {
+  constructor(
+    difficulty: Difficulty,
+    roundDuration: number,
+    opponentId: BoxingOpponentId = "mantis",
+  ) {
     const deck = new ChallengeDeck();
-    super("combat", deck.boxing());
+    super("combat", deck.boxing(boxingOpponents[opponentId].beginner));
     this.deck = deck;
-    this.boxing = new BoxingSystem(difficulty, roundDuration);
+    this.boxing = new BoxingSystem(difficulty, roundDuration, opponentId);
     this.baseline = this.engine.snapshot();
     this.cleanup = this.engine.subscribe((event) => {
       if (event.kind === "incorrect") this.boxing.mistake();
@@ -43,7 +48,9 @@ export class BoxingSession extends GameSession {
   private nextChallenge() {
     this.baseline = this.engine.snapshot();
     this.engine.nextPassage(
-      this.boxing.defending ? this.deck.defense(this.boxing.difficulty) : this.deck.boxing(),
+      this.boxing.defending
+        ? this.deck.defense(this.boxing.difficulty, this.boxing.opponent.beginner)
+        : this.deck.boxing(this.boxing.opponent.beginner),
     );
   }
   simulate(seconds: number) {

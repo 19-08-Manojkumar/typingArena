@@ -751,13 +751,31 @@ button:disabled {
   margin: 7px 0 0;
   line-height: 1.5;
 }
+.footer-attribution {
+  color: #8896af;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+.footer-credit {
+  color: #9dbbff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.footer-credit:hover,
+.footer-credit:focus-visible {
+  color: #dfe9ff;
+  text-decoration: underline;
+}
 .bottom-callout > a {
   margin-left: auto;
   white-space: nowrap;
   font-size: 10px;
 }
 .footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
   align-items: center;
   justify-content: space-between;
   margin: 0 40px;
@@ -770,6 +788,9 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.footer > span:last-child {
+  justify-self: end;
 }
 .footer-version {
   margin-left: 12px;
@@ -1250,8 +1271,14 @@ input[type="range"] {
   }
   .footer {
     margin: 0 18px;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 12px;
     padding-bottom: 85px;
     font-size: 8px;
+  }
+  .footer > span:last-child {
+    justify-self: center;
   }
   .footer-version {
     display: none;

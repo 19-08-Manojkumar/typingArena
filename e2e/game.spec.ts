@@ -136,10 +136,17 @@ test("fighter selection, specials, battle victory, and offline gameplay", async 
   await page.screenshot({ path: ".local/victory.png", fullPage: true });
 });
 test("boxing combinations, responsive HUD, and completion", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/combat");
-  await page.getByLabel("OPPONENT DIFFICULTY").selectOption("easy");
+  await page.getByRole("button", { name: /Iron Mantis/ }).click();
+  await page.getByLabel("OPPONENT DIFFICULTY").selectOption("hard");
   await page.getByRole("button", { name: /Quick bout/ }).click();
   await waitForTyping(page);
+  await expect(page.getByText("Rookie Ray", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("passage")).toHaveText(/^[a-z]{2,5}$/);
+  await expect(page.getByText("UPPERCUT CHARGE", { exact: true })).toBeVisible();
+  await page.screenshot({ path: ".local/combat-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
   await expectSingleViewport(page);
@@ -150,6 +157,7 @@ test("boxing combinations, responsive HUD, and completion", async ({ page }) => 
     await page.waitForTimeout(100);
   }
   await expect(page.getByRole("region", { name: "Game results" })).toBeVisible();
+  expect(errors).toEqual([]);
 });
 test("corrupted saves recover and all routes load", async ({ page }) => {
   await page.addInitScript(() => {

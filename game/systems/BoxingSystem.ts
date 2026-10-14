@@ -1,6 +1,8 @@
 import { calculateDamage, clamp } from "@/lib/scoring";
 import type { Difficulty } from "@/game/types/game.types";
 import type { AttackPerformance, CombatEffect } from "@/game/systems/CombatSystem";
+import { boxingPresentation } from "@/game/systems/BoxingPresentation";
+import { boxingOpponents, type BoxingOpponentId } from "@/game/data/boxingOpponents";
 
 export interface RoundScore {
   round: number;
@@ -18,6 +20,9 @@ export class BoxingSystem {
   elapsed = 0;
   damageDealt = 0;
   combo = 0;
+  momentum = 0;
+  counterReady = false;
+  private punches = 0;
   defending = false;
   defenseRemaining = 0;
   nextAttack = 7;
@@ -33,8 +38,24 @@ export class BoxingSystem {
   constructor(
     readonly difficulty: Difficulty,
     readonly roundDuration = 35,
+    opponentId: BoxingOpponentId = "mantis",
   ) {
+    this.opponent = boxingOpponents[opponentId];
+    this.enemyHealth = this.opponent.health;
+    this.nextAttack = this.opponent.beginner ? this.attackInterval() : 7;
     this.remaining = roundDuration;
+  }
+  readonly opponent: (typeof boxingOpponents)[BoxingOpponentId];
+  get defenseWindow() {
+    return this.opponent.beginner
+      ? this.opponent.defenseWindow
+      : { easy: 7, normal: 4, hard: 3.5 }[this.difficulty];
+  }
+  get guardAccuracy() {
+    return this.opponent.beginner ? 60 : 80;
+  }
+  get staminaCost() {
+    return this.opponent.beginner ? 10 : 18;
   }
   get defenseText() {
     return { easy: "guard up", normal: "slip and guard", hard: "slip duck and guard" }[
@@ -44,26 +65,36 @@ export class BoxingSystem {
   get multiplier() {
     return 1 + Math.min(this.combo, 5) * 0.1;
   }
+  get nextMove() {
+    return this.counterReady
+      ? "counter"
+      : this.momentum >= 3
+        ? "uppercut"
+        : ["jab", "cross", "hook"][this.punches % 3];
+  }
   resolve(id: string, stats: AttackPerformance): number {
     if (this.finished || this.intermission > 0 || this.resolved.has(id)) return 0;
     this.resolved.add(id);
     if (this.defending) {
-      const damage = stats.accuracy >= 80 ? 0 : 5;
+      const damage = stats.accuracy >= this.guardAccuracy ? 0 : this.opponent.beginner ? 2 : 5;
       this.receiveDamage(damage);
       this.defending = false;
       this.defenseRemaining = 0;
       this.nextAttack = this.attackInterval();
       this.stamina = clamp(this.stamina + (damage === 0 ? 18 : 5), 0, 100);
+      this.counterReady = damage === 0;
       this.effect = {
         serial: this.effect.serial + 1,
         source: "opponent",
         damage,
         effect: "impact",
         name: damage === 0 ? "Perfect guard" : "Partial guard",
+        presentation: boxingPresentation("guard", stats.accuracy),
       };
+      this.checkKnockout();
       return 0;
     }
-    if (this.stamina < 18 || this.cooldown > 0) {
+    if (this.stamina < this.staminaCost || this.cooldown > 0) {
       this.stamina = clamp(this.stamina + 12, 0, 100);
       this.combo = 0;
       this.effect = {
@@ -72,31 +103,49 @@ export class BoxingSystem {
         damage: 0,
         effect: "impact",
         name: "Recovering stamina",
+        presentation: boxingPresentation("recover"),
       };
       return 0;
     }
-    this.stamina = clamp(this.stamina - 18, 0, 100);
+    this.stamina = clamp(this.stamina - this.staminaCost, 0, 100);
     this.cooldown = 0.7;
+    const move = this.nextMove;
+    const bonus = move === "uppercut" ? 1.6 : move === "counter" ? 1.35 : 1;
     const damage = Math.min(
       this.enemyHealth,
-      Math.round(calculateDamage(12, stats.accuracy, stats.wpm, stats.combo) * this.multiplier),
+      Math.round(
+        calculateDamage(12, stats.accuracy, stats.wpm, stats.combo) * this.multiplier * bonus,
+      ),
     );
     this.enemyHealth = clamp(this.enemyHealth - damage, 0, this.maxHealth);
     this.damageDealt += damage;
     this.dealtThisRound += damage;
     this.combo = stats.accuracy >= 90 ? Math.min(5, this.combo + 1) : 0;
+    this.momentum =
+      move === "uppercut" ? 0 : stats.accuracy >= 90 ? Math.min(3, this.momentum + 1) : 0;
+    this.counterReady = false;
+    this.punches++;
     this.effect = {
       serial: this.effect.serial + 1,
       source: "player",
       damage,
       effect: "impact",
-      name: "Punch combination",
+      name:
+        {
+          jab: "Snap jab",
+          cross: "One-two cross",
+          hook: "Heavy hook",
+          uppercut: "Power uppercut",
+          counter: "Counter cross",
+        }[move] ?? "Punch combination",
+      presentation: boxingPresentation(move, stats.accuracy),
     };
     this.checkKnockout();
     return damage;
   }
   mistake() {
     this.combo = 0;
+    this.momentum = 0;
     this.stamina = clamp(this.stamina - 1, 0, 100);
   }
   update(dt: number) {
@@ -116,7 +165,9 @@ export class BoxingSystem {
     if (this.defending) {
       this.defenseRemaining -= dt;
       if (this.defenseRemaining <= 0) {
-        const damage = { easy: 12, normal: 18, hard: 25 }[this.difficulty];
+        const damage = this.opponent.beginner
+          ? this.opponent.damage
+          : { easy: 8, normal: 18, hard: 25 }[this.difficulty];
         this.receiveDamage(damage);
         this.effect = {
           serial: this.effect.serial + 1,
@@ -124,22 +175,27 @@ export class BoxingSystem {
           damage,
           effect: "impact",
           name: "Opponent combination",
+          presentation: boxingPresentation("hook"),
         };
         this.defending = false;
         this.nextAttack = this.attackInterval();
         this.combo = 0;
+        this.momentum = 0;
+        this.counterReady = false;
       }
     } else {
       this.nextAttack -= dt;
       if (this.nextAttack <= 0) {
         this.defending = true;
-        this.defenseRemaining = { easy: 4.5, normal: 4, hard: 3.5 }[this.difficulty];
+        this.defenseRemaining = this.defenseWindow;
       }
     }
     this.checkKnockout();
   }
   private attackInterval() {
-    return { easy: 6, normal: 5, hard: 4 }[this.difficulty];
+    return this.opponent.beginner
+      ? this.opponent.attackInterval
+      : { easy: 9, normal: 5, hard: 4 }[this.difficulty];
   }
   private receiveDamage(damage: number) {
     this.health = clamp(this.health - damage, 0, this.maxHealth);
@@ -174,6 +230,8 @@ export class BoxingSystem {
     this.intermission = 3;
     this.stamina = clamp(this.stamina + 30, 0, 100);
     this.dealtThisRound = this.takenThisRound = this.combo = 0;
+    this.momentum = 0;
+    this.counterReady = false;
     this.defending = false;
     this.defenseRemaining = 0;
     this.nextAttack = this.attackInterval();

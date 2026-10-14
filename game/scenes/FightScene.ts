@@ -13,8 +13,8 @@ export interface FightView {
   warning: boolean;
 }
 export abstract class FightScene extends Phaser.Scene {
-  private player!: Phaser.GameObjects.Container;
-  private enemy!: Phaser.GameObjects.Container;
+  protected player!: Phaser.GameObjects.Container;
+  protected enemy!: Phaser.GameObjects.Container;
   private animator!: AttackAnimator;
   private serial = 0;
   private defeated = false;
@@ -25,7 +25,7 @@ export abstract class FightScene extends Phaser.Scene {
     private playerColor: number,
     private enemyColor: number,
     private boxing: boolean,
-    private reducedMotion: boolean,
+    protected reducedMotion: boolean,
     private playerKind = boxing ? "boxer" : "ninja",
     private enemyKind = boxing ? "boxer" : "ninja",
   ) {
@@ -121,7 +121,7 @@ export abstract class FightScene extends Phaser.Scene {
     }
     if (state.finished && !this.defeated) {
       this.defeated = true;
-      this.time.delayedCall(300, () =>
+      this.time.delayedCall(this.boxing ? 650 : 300, () =>
         this.tweens.add({
           targets: state.won ? this.enemy : this.player,
           angle: state.won ? 75 : -75,

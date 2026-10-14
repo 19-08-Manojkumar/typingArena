@@ -139,6 +139,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>
             <Keyboard size={14} /> Made for the love of typing.
           </span>
+          <div className="footer-attribution">
+            Developed and owned by{" "}
+            <a
+              className="footer-credit"
+              href="https://manojkumar-dev.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <strong>Manojkumar</strong>
+            </a>
+          </div>
           <span>
             <span className="status-dot" /> All systems ready{" "}
             <span className="footer-version">v1.0</span>

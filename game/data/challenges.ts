@@ -145,10 +145,18 @@ export class ChallengeDeck {
     const text = `${start} ${ending}`;
     return difficulty === "easy" ? text.toLowerCase().replace(/[.,]/g, "") : text;
   }
-  boxing() {
+  boxing(beginner = false) {
+    if (beginner) {
+      const words = ["jab", "hit", "tap", "box", "go", "step", "hook", "left", "right", "punch"];
+      return words[this.index++ % words.length];
+    }
     return boxingPrompts[this.index++ % boxingPrompts.length].toLowerCase().replace(/[.]/g, "");
   }
-  defense(difficulty: Difficulty) {
+  defense(difficulty: Difficulty, beginner = false) {
+    if (beginner) {
+      const words = ["up", "duck", "slip", "back"];
+      return words[this.index++ % words.length];
+    }
     return defenses[difficulty][this.index++ % defenses[difficulty].length];
   }
 }

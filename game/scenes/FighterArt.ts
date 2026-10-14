@@ -9,6 +9,7 @@ export function makeFighter(
   archetype: string,
   shadow = false,
 ) {
+  if (archetype === "boxer") return makeBoxer(scene, x, color, flip);
   const fighter = scene.add.container(x, 278);
   const g = scene.add.graphics();
   const boxing = archetype === "boxer" || archetype === "brawler";
@@ -82,4 +83,39 @@ export function makeFighter(
   fighter.add(g);
   fighter.setScale(flip ? -1 : 1, 1);
   return fighter;
+}
+
+function makeBoxer(scene: Phaser.Scene, x: number, color: number, flip: boolean) {
+  const fighter = scene.add.container(x, 278);
+  const body = scene.add.graphics();
+  body.fillStyle(0x030711, 0.5).fillEllipse(0, 42, 105, 20);
+  body.lineStyle(18, 0x1b233b);
+  body.lineBetween(-14, -2, -31, 35).lineBetween(12, -2, 33, 35);
+  body.fillStyle(color).fillRoundedRect(-45, 28, 32, 14, 4).fillRoundedRect(21, 28, 32, 14, 4);
+  body.fillStyle(flip ? 0x9e6870 : 0xd6a081).fillRoundedRect(-29, -85, 59, 72, 16);
+  body.lineStyle(2, 0xf9d3b1, 0.3).lineBetween(-18, -66, 18, -66);
+  body.fillStyle(color).fillRoundedRect(-30, -24, 60, 34, 5);
+  body.fillStyle(0xf1eddf).fillRect(-30, -24, 60, 8);
+  body.fillStyle(0x172035).fillRect(-5, -16, 10, 25);
+  body.fillStyle(flip ? 0xb37d80 : 0xe5b295).fillRoundedRect(-17, -125, 38, 42, 12);
+  body.fillStyle(0x172035).fillRoundedRect(-20, -133, 41, 17, 7);
+  body.fillStyle(0xf0f5ff).fillRect(8, -112, 8, 3);
+  body.lineStyle(3, 0x734c55).lineBetween(11, -96, 20, -98);
+  fighter.add(body);
+  for (const [name, shoulderX, shoulderY] of [
+    ["rear-glove", -20, -67],
+    ["lead-glove", 22, -72],
+  ] as const) {
+    const arm = scene.add.container(shoulderX, shoulderY).setName(name);
+    const art = scene.add.graphics();
+    art.lineStyle(15, flip ? 0xb37d80 : 0xe5b295);
+    art.lineBetween(0, 0, 17, 14).lineBetween(17, 14, 31, -18);
+    art.fillStyle(0xe6e9f3).fillRoundedRect(20, -23, 22, 13, 3);
+    art.fillStyle(color).fillRoundedRect(18, -43, 34, 29, 10);
+    art.fillStyle(0xffffff, 0.28).fillRoundedRect(24, -39, 19, 5, 2);
+    art.lineStyle(2, 0x131c30, 0.6).lineBetween(24, -20, 44, -20);
+    arm.add(art);
+    fighter.add(arm);
+  }
+  return fighter.setScale(flip ? -1 : 1, 1);
 }

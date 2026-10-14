@@ -3,6 +3,7 @@ import type { CombatEffect } from "@/game/systems/CombatSystem";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
 import { makeFighter } from "@/game/scenes/FighterArt";
 import { PowerEffects } from "@/game/scenes/PowerEffects";
+import { BoxingAnimator } from "@/game/scenes/BoxingAnimator";
 
 type Actor = Phaser.GameObjects.Container;
 export class AttackAnimator {
@@ -11,6 +12,10 @@ export class AttackAnimator {
     private reducedMotion: boolean,
   ) {}
   play(effect: CombatEffect, source: Actor, target: Actor, color: number) {
+    if (effect.presentation?.abilityId.startsWith("boxing-")) {
+      new BoxingAnimator(this.scene, this.reducedMotion).play(effect, source, target, color);
+      return;
+    }
     const plan: AttackPresentation = effect.presentation ?? {
       abilityId: "punch",
       fighterId: "boxer",

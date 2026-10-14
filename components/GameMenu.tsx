@@ -17,6 +17,9 @@ import { ArenaArt } from "@/components/ArenaArt";
 import { usePlayer } from "@/components/PlayerProvider";
 import { xpForLevel } from "@/lib/scoring";
 
+const developerHandle = "Manojkumar";
+const developerPortfolio = "https://manojkumar-dev.vercel.app/";
+
 const modes = [
   {
     id: "racing" as const,
@@ -75,7 +78,12 @@ export function GameMenu({ modesOnly = false }: { modesOnly?: boolean }) {
         </div>
         <div className="keyboard-tag">
           <Keyboard size={17} />
-          <span>POWERED BY YOU</span>
+          <span>
+            POWERED BY{" "}
+            <a href={developerPortfolio} target="_blank" rel="noreferrer">
+              {developerHandle}
+            </a>
+          </span>
         </div>
       </div>
       {!modesOnly && (
