@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
 import { makeFighter } from "@/game/scenes/FighterArt";
+import { CelestialTempest } from "@/game/scenes/CelestialTempest";
 
 type Actor = Phaser.GameObjects.Container;
 
@@ -14,8 +15,8 @@ export class PowerEffects {
     this.charge(source.x, color, plan);
     switch (plan.fighterId) {
       case "ninja":
-        this.crescents(source, target, color, plan, direction);
-        if (supreme) this.tempest(target, color, plan);
+        if (supreme) new CelestialTempest(this.scene).play(source, target, color, plan);
+        else this.crescents(source, target, color, plan, direction);
         break;
       case "swordsman":
         this.skyBlade(target, color, plan, supreme);
@@ -131,48 +132,6 @@ export class PowerEffects {
           duration: 400,
           ease: "Cubic.easeIn",
           onComplete: () => arc.destroy(),
-        });
-      });
-    }
-  }
-
-  private tempest(target: Actor, color: number, plan: AttackPresentation) {
-    const storm = this.scene.add.graphics().setPosition(480, 155).setScale(0.05).setDepth(7);
-    for (let i = 0; i < 5; i++) {
-      storm.lineStyle(7 - i, color, 0.2 + i * 0.13);
-      storm.strokeEllipse(0, 0, 170 - i * 24, 90 - i * 12);
-    }
-    storm.fillStyle(0xe7f6ff);
-    storm.fillCircle(0, 0, 19);
-    this.scene.tweens.add({
-      targets: storm,
-      scale: 1.1 + plan.quality * 0.4,
-      angle: 540,
-      duration: plan.impactMs - 400,
-    });
-    this.scene.tweens.add({
-      targets: storm,
-      x: target.x,
-      y: 225,
-      delay: plan.impactMs - 380,
-      duration: 370,
-      ease: "Cubic.easeIn",
-    });
-    this.fade(storm, plan.impactMs, 450);
-    for (let i = 0; i < Math.min(plan.units, 18); i++) {
-      this.after(plan.impactMs - 600 + i * 28, () => {
-        const bolt = this.scene.add
-          .graphics()
-          .setPosition(340 + (i % 7) * 45, 115)
-          .setDepth(8);
-        bolt.lineStyle(4, color, 0.9);
-        bolt.lineBetween(0, -26, 0, 6);
-        this.scene.tweens.add({
-          targets: bolt,
-          x: target.x + ((i % 3) - 1) * 20,
-          y: 245,
-          duration: 350,
-          onComplete: () => bolt.destroy(),
         });
       });
     }
