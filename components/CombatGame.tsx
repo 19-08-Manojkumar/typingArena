@@ -8,6 +8,8 @@ import type { Difficulty } from "@/game/types/game.types";
 import { GameStage } from "@/components/GameStage";
 import { Meter } from "@/components/Meter";
 import { boxingOpponents, type BoxingOpponentId } from "@/game/data/boxingOpponents";
+import { BoxingControls } from "@/components/BoxingControls";
+import { boxingMoves } from "@/game/data/boxingMoves";
 export function CombatGame() {
   const { profile, ready } = usePlayer();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -24,6 +26,12 @@ export function CombatGame() {
       <GameStage
         session={session}
         title="Combat Arena"
+        onAction={(key) => {
+          const index = ["1", "2", "3", "4", "5"].indexOf(key);
+          if (index < 0) return false;
+          session.selectMove(boxingMoves[index].id);
+          return true;
+        }}
         onReplay={() => start(roundDuration, session.boxing.opponent.id, session.boxing.difficulty)}
         label={() =>
           session.boxing.intermission > 0
@@ -43,12 +51,6 @@ export function CombatGame() {
                 color="green"
               />
               <Meter label="STAMINA" value={session.boxing.stamina} max={100} color="blue" />
-              <Meter
-                label={session.boxing.counterReady ? "COUNTER READY" : "UPPERCUT CHARGE"}
-                value={session.boxing.momentum}
-                max={3}
-                color="blue"
-              />
             </div>
             <div className="arena-center-label">
               <span>ROUND {session.boxing.round} / 3</span>
@@ -72,52 +74,7 @@ export function CombatGame() {
             </div>
           </>
         )}
-        hud={() => (
-          <div className="battle-hud">
-            <div className="round-banner">
-              <span>ROUND {session.boxing.round} / 3</span>
-              <strong>
-                {session.boxing.intermission > 0
-                  ? `Next round in ${Math.ceil(session.boxing.intermission)}s`
-                  : `${Math.ceil(session.boxing.remaining)}s`}
-              </strong>
-              <span>
-                {session.boxing.defending ? "DEFENSE CHALLENGE" : "LAND YOUR COMBINATION"}
-              </span>
-            </div>
-            <p className="hud-hint">
-              {session.boxing.intermission > 0
-                ? "Corner break. Stamina recovers; typing resumes next round."
-                : session.boxing.defending
-                  ? `Type the defense before the timer ends. At least ${session.boxing.guardAccuracy}% accuracy blocks all damage.`
-                  : session.boxing.stamina < session.boxing.staminaCost
-                    ? "Low stamina. Your next completed combo helps you recover."
-                    : session.boxing.counterReady
-                      ? "Guard broken! Complete your next combination for a counter with 35% bonus damage."
-                      : session.boxing.momentum >= 3
-                        ? "Power charged! Your next combination unleashes an uppercut with 60% bonus damage."
-                        : "Land clean combinations to charge a power uppercut. A typing mistake resets your charge."}
-            </p>
-            {session.boxing.effect.name && (
-              <p className="combat-feedback" role="status">
-                {session.boxing.effect.name}
-                {session.boxing.effect.damage > 0
-                  ? ` · ${session.boxing.effect.damage} damage`
-                  : ""}
-              </p>
-            )}
-            {session.boxing.roundScores.length > 0 && (
-              <div className="round-scorecards">
-                {session.boxing.roundScores.map((score) => (
-                  <span key={score.round}>
-                    R{score.round} · {score.won ? "WON" : "LOST / TIED"} · {score.dealt} dealt /{" "}
-                    {score.taken} taken
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        hud={() => <BoxingControls session={session} />}
       />
     );
   return (
@@ -142,13 +99,13 @@ export function CombatGame() {
           </h2>
           <p>
             Start with a friendly practice partner or challenge Iron Mantis in three rounds of
-            keyboard boxing. Type combinations to punch, and react to incoming attacks with a timed
-            defense. Chain jabs, crosses, and hooks to charge a power uppercut, then turn a perfect
-            guard into a punishing counter.
+            keyboard boxing. Choose a jab, one-two, or body hook and finish the text to throw it.
+            Three clean hits charge a power uppercut or ringside flurry. Read incoming attacks, type
+            the defense, then slip their jab and land a counter.
           </p>
           <div className="boxing-features">
             <span>
-              <Zap size={16} /> Charge power uppercuts
+              <Zap size={16} /> Uppercuts + flurries
             </span>
             <span>
               <Shield size={16} /> Block and counter

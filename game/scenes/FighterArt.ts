@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { BoxerRig } from "@/game/scenes/BoxerRig";
 
 /** Original procedural silhouettes; also reused by clones and shadow summons. */
 export function makeFighter(
@@ -9,7 +10,7 @@ export function makeFighter(
   archetype: string,
   shadow = false,
 ) {
-  if (archetype === "boxer") return makeBoxer(scene, x, color, flip);
+  if (archetype === "boxer") return new BoxerRig(scene, x, color, flip);
   const fighter = scene.add.container(x, 278);
   const g = scene.add.graphics();
   const boxing = archetype === "boxer" || archetype === "brawler";
@@ -65,57 +66,26 @@ export function makeFighter(
     g.fillStyle(0x293146);
     g.fillTriangle(-12, -83, 12, -83, 0, -33);
   }
-  g.lineStyle(boxing ? 19 : 14, shadow ? 0x181d32 : boxing ? 0xc18b95 : color);
-  g.lineBetween(-22, -68, -44, -31);
-  g.lineBetween(22, -68, 47, -46);
-  g.lineBetween(47, -46, 60, -77);
-  g.fillStyle(body);
-  g.fillRoundedRect(47, -95, boxing ? 34 : 26, 30, 9);
-  g.fillRoundedRect(-59, -44, boxing ? 30 : 23, 28, 8);
-  if (archetype === "swordsman") {
-    g.lineStyle(6, 0xdbe8ff);
-    g.lineBetween(62, -73, 100, -172);
-    g.lineStyle(3, color);
-    g.lineBetween(55, -86, 76, -80);
-  }
-  g.lineStyle(2, 0xf0edff, 0.35);
-  g.lineBetween(53, -89, 66, -89);
   fighter.add(g);
-  fighter.setScale(flip ? -1 : 1, 1);
-  return fighter;
-}
-
-function makeBoxer(scene: Phaser.Scene, x: number, color: number, flip: boolean) {
-  const fighter = scene.add.container(x, 278);
-  const body = scene.add.graphics();
-  body.fillStyle(0x030711, 0.5).fillEllipse(0, 42, 105, 20);
-  body.lineStyle(18, 0x1b233b);
-  body.lineBetween(-14, -2, -31, 35).lineBetween(12, -2, 33, 35);
-  body.fillStyle(color).fillRoundedRect(-45, 28, 32, 14, 4).fillRoundedRect(21, 28, 32, 14, 4);
-  body.fillStyle(flip ? 0x9e6870 : 0xd6a081).fillRoundedRect(-29, -85, 59, 72, 16);
-  body.lineStyle(2, 0xf9d3b1, 0.3).lineBetween(-18, -66, 18, -66);
-  body.fillStyle(color).fillRoundedRect(-30, -24, 60, 34, 5);
-  body.fillStyle(0xf1eddf).fillRect(-30, -24, 60, 8);
-  body.fillStyle(0x172035).fillRect(-5, -16, 10, 25);
-  body.fillStyle(flip ? 0xb37d80 : 0xe5b295).fillRoundedRect(-17, -125, 38, 42, 12);
-  body.fillStyle(0x172035).fillRoundedRect(-20, -133, 41, 17, 7);
-  body.fillStyle(0xf0f5ff).fillRect(8, -112, 8, 3);
-  body.lineStyle(3, 0x734c55).lineBetween(11, -96, 20, -98);
-  fighter.add(body);
-  for (const [name, shoulderX, shoulderY] of [
-    ["rear-glove", -20, -67],
-    ["lead-glove", 22, -72],
-  ] as const) {
-    const arm = scene.add.container(shoulderX, shoulderY).setName(name);
+  for (const lead of [false, true]) {
+    const arm = scene.add.container(lead ? 22 : -22, -68).setName(lead ? "lead-arm" : "rear-arm");
     const art = scene.add.graphics();
-    art.lineStyle(15, flip ? 0xb37d80 : 0xe5b295);
-    art.lineBetween(0, 0, 17, 14).lineBetween(17, 14, 31, -18);
-    art.fillStyle(0xe6e9f3).fillRoundedRect(20, -23, 22, 13, 3);
-    art.fillStyle(color).fillRoundedRect(18, -43, 34, 29, 10);
-    art.fillStyle(0xffffff, 0.28).fillRoundedRect(24, -39, 19, 5, 2);
-    art.lineStyle(2, 0x131c30, 0.6).lineBetween(24, -20, 44, -20);
+    art.lineStyle(boxing ? 19 : 14, shadow ? 0x181d32 : boxing ? 0xc18b95 : color);
+    if (lead) art.lineBetween(0, 0, 25, 22).lineBetween(25, 22, 38, -9);
+    else art.lineBetween(0, 0, -22, 37);
+    art.fillStyle(body);
+    art.fillRoundedRect(lead ? 25 : -37, lead ? -27 : 24, boxing ? 34 : 26, 30, 9);
+    if (lead && archetype === "swordsman") {
+      // The blade now follows the wrist instead of remaining painted onto the torso.
+      art.lineStyle(7, color, 0.2).lineBetween(40, -5, 70, -82);
+      art.lineStyle(4, 0xdbe8ff).lineBetween(40, -5, 70, -82);
+      art.lineStyle(3, color).lineBetween(33, -18, 53, -12);
+    }
+    art.lineStyle(2, 0xf0edff, 0.45);
+    if (lead) art.lineBetween(31, -21, 44, -21);
     arm.add(art);
     fighter.add(arm);
   }
-  return fighter.setScale(flip ? -1 : 1, 1);
+  fighter.setScale(flip ? -1 : 1, 1);
+  return fighter;
 }

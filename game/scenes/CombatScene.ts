@@ -1,6 +1,7 @@
 import { FightScene } from "@/game/scenes/FightScene";
 import type { BoxingSession } from "@/game/systems/BoxingSession";
 import * as Phaser from "phaser";
+import { BoxerRig } from "@/game/scenes/BoxerRig";
 export class CombatScene extends FightScene {
   private ringLabel!: Phaser.GameObjects.Text;
   private defenseBar!: Phaser.GameObjects.Graphics;
@@ -40,28 +41,16 @@ export class CombatScene extends FightScene {
       .setDepth(12);
     this.defenseBar = this.add.graphics().setDepth(12);
     if (!this.reducedMotion) {
-      this.tweens.add({
-        targets: this.player,
-        y: 274,
-        duration: 430,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-      this.tweens.add({
-        targets: this.enemy,
-        y: 274,
-        duration: 510,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
       this.tweens.add({ targets: lights, alpha: 0.45, duration: 2200, yoyo: true, repeat: -1 });
     }
   }
   override update(time: number, delta: number) {
     super.update(time, delta);
     const b = this.match.boxing;
+    if (!this.reducedMotion && !b.finished && this.match.engine.snapshot().status === "running") {
+      if (this.player instanceof BoxerRig) this.player.idle(time);
+      if (this.enemy instanceof BoxerRig) this.enemy.idle(time + 160);
+    }
     this.ringLabel.setText(
       b.finished
         ? b.won
@@ -73,9 +62,11 @@ export class CombatScene extends FightScene {
             ? "HANDS UP • DEFEND THE COMBINATION"
             : b.counterReady
               ? "OPEN GUARD • COUNTER READY"
-              : b.momentum >= 3
-                ? "POWER UPPERCUT READY"
-                : `ROUND ${b.round} • ${b.nextMove.toUpperCase()} COMBINATION`,
+              : b.selectedMove
+                ? `NEXT • ${b.selectedMove.toUpperCase()}`
+                : b.momentum >= 3
+                  ? "UPPERCUT / FLURRY READY"
+                  : `ROUND ${b.round} • ${b.nextMove.toUpperCase()} COMBINATION`,
     );
     this.defenseBar.clear();
     if (b.defending && !b.finished) {

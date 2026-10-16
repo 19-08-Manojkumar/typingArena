@@ -80,9 +80,15 @@ export abstract class FightScene extends Phaser.Scene {
     this.enemy = makeFighter(this, 710, this.enemyColor, true, this.enemyKind).setDepth(5);
     this.animator = new AttackAnimator(this, this.reducedMotion);
     const resize = () => {
+      if (this.boxing) this.animator.resetBoxing();
       this.cameras.main.centerOn(480, 205);
-      this.player.x = this.scale.gameSize.width < 800 ? 330 : 255;
-      this.enemy.x = this.scale.gameSize.width < 800 ? 630 : 710;
+      const compact = this.scale.gameSize.width < 800;
+      this.player.x = this.boxing ? (compact ? 375 : 360) : compact ? 330 : 255;
+      this.enemy.x = this.boxing ? (compact ? 585 : 600) : compact ? 630 : 710;
+      if (this.boxing) {
+        this.player.setData("homeX", this.player.x);
+        this.enemy.setData("homeX", this.enemy.x);
+      }
     };
     resize();
     this.scale.on(Phaser.Scale.Events.RESIZE, resize);
@@ -121,13 +127,15 @@ export abstract class FightScene extends Phaser.Scene {
     }
     if (state.finished && !this.defeated) {
       this.defeated = true;
-      this.time.delayedCall(this.boxing ? 650 : 300, () =>
-        this.tweens.add({
-          targets: state.won ? this.enemy : this.player,
-          angle: state.won ? 75 : -75,
-          alpha: 0.35,
-          duration: this.reducedMotion ? 0 : 450,
-        }),
+      this.time.delayedCall(
+        this.boxing ? (state.effect.presentation?.durationMs ?? 720) : 300,
+        () =>
+          this.tweens.add({
+            targets: state.won ? this.enemy : this.player,
+            angle: state.won ? 75 : -75,
+            alpha: 0.35,
+            duration: this.reducedMotion ? 0 : 450,
+          }),
       );
     }
   }

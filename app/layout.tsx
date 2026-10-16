@@ -3,6 +3,8 @@ import { PlayerProvider } from "@/components/PlayerProvider";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 import "./gameplay.css";
+import "./racing.css";
+import "./boxing.css";
 
 const title = "Typing Arena — Find your flow";
 const description =

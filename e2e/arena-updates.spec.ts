@@ -1,5 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
 
+// Full fights include asynchronous renderer loading, countdowns, and several completed casts.
+test.setTimeout(90000);
+
 async function completeSentence(page: Page) {
   await expect(page.getByTestId("typing-input")).toBeEnabled({ timeout: 8000 });
   const text = await page.getByTestId("passage").innerText();
@@ -14,6 +17,7 @@ test("battle fits laptop and mobile viewports and changes sentences", async ({ p
   await page.getByLabel("OPPONENT DIFFICULTY").selectOption("easy");
   await page.getByRole("button", { name: /Dark Hunter/ }).click();
   await page.getByRole("button", { name: /Pirate Brawler/ }).click();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 45000 });
   await expect(page.getByTestId("typing-input")).toBeEnabled();
   for (const viewport of [
     { width: 1280, height: 720 },
@@ -46,6 +50,7 @@ test("Dark Hunter summons a creature and then an army after completed casts", as
   await page.getByLabel("OPPONENT DIFFICULTY").selectOption("hard");
   await page.getByRole("button", { name: /Dark Hunter/ }).click();
   await page.getByRole("button", { name: /Pirate Brawler/ }).click();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 45000 });
   await completeSentence(page);
   await expect(page.getByTestId("typing-input")).toBeEnabled();
   const summon = page.getByRole("button", { name: /2 Shadow Summon/ });
@@ -56,7 +61,10 @@ test("Dark Hunter summons a creature and then an army after completed casts", as
   await page.waitForTimeout(350);
   await page.screenshot({ path: ".local/shadow-summon.png" });
   await expect(page.getByTestId("typing-input")).toBeEnabled();
-  await page.getByRole("button", { name: "Restart game" }).click();
+  await page
+    .getByRole("button", { name: "Restart game" })
+    .or(page.getByRole("button", { name: "Play again", exact: true }))
+    .click();
   for (let i = 0; i < 3; i++) {
     await completeSentence(page);
     await expect(page.getByTestId("typing-input")).toBeEnabled();
@@ -83,6 +91,7 @@ for (const fighter of [
     await page.getByLabel("OPPONENT DIFFICULTY").selectOption("hard");
     await page.getByRole("button", { name: new RegExp(fighter.name) }).click();
     await page.getByRole("button", { name: /Pirate Brawler/ }).click();
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 45000 });
     await expect(page.locator(".ability-button")).toHaveCount(5);
     await expect(page.getByTestId("typing-input")).toBeEnabled();
     // A locked power shortcut must not insert text or bypass spirit requirements.
@@ -102,7 +111,10 @@ for (const fighter of [
     await page.waitForTimeout(700);
     await page.screenshot({ path: `.local/${fighter.advanced.replaceAll(" ", "-")}.png` });
     await page.waitForTimeout(1200);
-    await page.getByRole("button", { name: "Restart game" }).click();
+    await page
+      .getByRole("button", { name: "Restart game" })
+      .or(page.getByRole("button", { name: "Play again", exact: true }))
+      .click();
     for (let i = 0; i < 4; i++) {
       await completeSentence(page);
       await expect(page.getByTestId("typing-input")).toBeEnabled();

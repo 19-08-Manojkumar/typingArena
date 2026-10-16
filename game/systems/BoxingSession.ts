@@ -4,11 +4,14 @@ import type { Difficulty, TypingSnapshot } from "@/game/types/game.types";
 import { calculateAccuracy, calculateWpm } from "@/lib/scoring";
 import { ChallengeDeck } from "@/game/data/challenges";
 import { boxingOpponents, type BoxingOpponentId } from "@/game/data/boxingOpponents";
+import type { BoxingMoveId } from "@/game/data/boxingMoves";
+import type { AttackPerformance } from "@/game/systems/CombatSystem";
 export class BoxingSession extends GameSession {
   readonly boxing: BoxingSystem;
   private challenge = 0;
   private deck: ChallengeDeck;
   private baseline: TypingSnapshot;
+  private pending: { id: string; stats: AttackPerformance } | null = null;
   constructor(
     difficulty: Difficulty,
     roundDuration: number,
@@ -24,26 +27,42 @@ export class BoxingSession extends GameSession {
       if (event.kind === "complete") {
         const attempts = event.snapshot.attempts - this.baseline.attempts;
         const incorrect = event.snapshot.incorrect - this.baseline.incorrect;
-        this.boxing.resolve(`combo-${this.challenge++}`, {
+        const stats = {
           accuracy: calculateAccuracy(attempts - incorrect, attempts),
           wpm: calculateWpm(
             event.snapshot.correct - this.baseline.correct,
             event.snapshot.elapsed - this.baseline.elapsed,
           ),
           combo: event.snapshot.wordCombo,
-        });
-        if (this.boxing.finished)
-          this.finish(this.boxing.won, {
-            damage: this.boxing.damageDealt,
-            rounds: this.boxing.round,
-            roundScores: this.boxing.roundScores,
-          });
-        else this.nextChallenge();
+        };
+        const id = `combo-${this.challenge++}`;
+        if (
+          !this.boxing.defending &&
+          this.boxing.cooldownRemaining > 0 &&
+          this.boxing.stamina >= this.boxing.staminaCost
+        )
+          this.pending = { id, stats };
+        else this.resolveCombination(id, stats);
       }
     });
   }
+  private resolveCombination(id: string, stats: AttackPerformance) {
+    this.boxing.resolve(id, stats);
+    if (this.boxing.finished)
+      this.finish(this.boxing.won, {
+        damage: this.boxing.damageDealt,
+        rounds: this.boxing.round,
+        roundScores: this.boxing.roundScores,
+      });
+    else this.nextChallenge();
+  }
   override key(key: string) {
     if (this.boxing.intermission === 0) super.key(key);
+  }
+  selectMove(move: BoxingMoveId | null) {
+    if (this.engine.snapshot().status !== "running" || !this.boxing.selectMove(move)) return false;
+    this.publish();
+    return true;
   }
   private nextChallenge() {
     this.baseline = this.engine.snapshot();
@@ -58,6 +77,21 @@ export class BoxingSession extends GameSession {
     const round = this.boxing.round;
     const resting = this.boxing.intermission > 0;
     this.boxing.update(seconds);
+    if (this.pending) {
+      if (
+        this.boxing.finished ||
+        this.boxing.defending ||
+        round !== this.boxing.round ||
+        this.boxing.intermission > 0
+      )
+        this.pending = null;
+      else if (this.boxing.cooldownRemaining === 0) {
+        const pending = this.pending;
+        this.pending = null;
+        this.resolveCombination(pending.id, pending.stats);
+        return;
+      }
+    }
     if (this.boxing.finished)
       this.finish(this.boxing.won, {
         damage: this.boxing.damageDealt,

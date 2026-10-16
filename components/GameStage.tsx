@@ -10,6 +10,7 @@ import type { GameSession } from "@/game/systems/GameSession";
 import type { TypingSnapshot } from "@/game/types/game.types";
 import { GameAudio } from "@/lib/audio";
 import { abilityShortcut } from "@/lib/shortcuts";
+import { RaceStartSignal } from "@/components/RaceStartSignal";
 
 interface GameStageProps {
   session: GameSession;
@@ -65,9 +66,9 @@ export function GameStage({
   useEffect(() => {
     if (!session.result) return;
     const id = session.result.id;
-    const timer = setTimeout(() => setPresentedResult(id), 1100);
+    const timer = setTimeout(() => setPresentedResult(id), session.mode === "combat" ? 1600 : 1100);
     return () => clearTimeout(timer);
-  }, [session.result]);
+  }, [session.result, session.mode]);
   if (session.result && presentedResult === session.result.id)
     return <GameResults result={session.result} onReplay={onReplay} />;
   return (
@@ -122,7 +123,10 @@ export function GameStage({
       <div className="stage-visual">
         <GameCanvas session={session} reducedMotion={profile.settings.reducedMotion} />
         {arenaHud && <div className="arena-hud">{arenaHud()}</div>}
-        {snapshot.status === "countdown" && (
+        {session.mode === "racing" && (
+          <RaceStartSignal snapshot={snapshot} reducedMotion={profile.settings.reducedMotion} />
+        )}
+        {snapshot.status === "countdown" && session.mode !== "racing" && (
           <div className="stage-overlay countdown" role="status">
             <span>READY TO MAKE YOUR MOVE?</span>
             <strong>{snapshot.countdown}</strong>
@@ -162,8 +166,11 @@ export function GameStage({
         label={typeof label === "function" ? label() : label}
       />
       <p className="rules-note">
-        Correct keys build power. Backspace fixes text; earlier mistakes still count. Escape pauses
-        the game.
+        {session.mode === "racing"
+          ? "Type to accelerate. Clean streaks charge nitro. Enter boosts when ready. Escape pauses the race."
+          : session.mode === "combat"
+            ? "Finish the text to punch. Click a move or use Alt+1–5 / Ctrl+Shift+1–5. Clean hits charge specials. Escape pauses."
+            : "Correct keys build power. Backspace fixes text; earlier mistakes still count. Escape pauses the game."}
       </p>
     </div>
   );

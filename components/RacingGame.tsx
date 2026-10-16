@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Flag, Zap } from "lucide-react";
+import { Flag } from "lucide-react";
 import { vehicles } from "@/game/data/vehicles";
 import { RacingSession } from "@/game/systems/RacingSession";
 import type { Difficulty, PassageLength, Vehicle } from "@/game/types/game.types";
 import { usePlayer } from "@/components/PlayerProvider";
 import { VehicleCard } from "@/components/VehicleCard";
 import { GameStage } from "@/components/GameStage";
-import { Meter } from "@/components/Meter";
+import { RacingHud } from "@/components/RacingHud";
 
 export function RacingGame() {
   const { profile, ready } = usePlayer();
@@ -29,6 +29,7 @@ export function RacingGame() {
       <GameStage
         session={session}
         title="Typing Racer"
+        label="TYPE TO ACCELERATE · ENTER TO BOOST"
         onReplay={() => start(vehicle)}
         onAction={(key) => {
           if (key === "Enter") {
@@ -37,39 +38,7 @@ export function RacingGame() {
           }
           return false;
         }}
-        hud={() => (
-          <>
-            <div className="race-position">
-              <span>POSITION</span>
-              <strong>
-                {session.race.place}
-                <small> / 4</small>
-              </strong>
-              <p>
-                {Math.round(session.race.position)} / {distance} m
-              </p>
-            </div>
-            <Meter
-              label={session.race.boostRemaining > 0 ? "NITRO ACTIVE" : "NITRO CHARGE"}
-              value={session.race.nitro}
-              max={100}
-            />
-            <button
-              className="button primary"
-              disabled={session.engine.snapshot().status !== "running" || session.race.nitro < 100}
-              onClick={() => {
-                session.nitro();
-                document.getElementById("typing-input")?.focus({ preventScroll: true });
-              }}
-            >
-              <Zap size={17} /> Nitro <kbd>Enter</kbd>
-            </button>
-            <div className="speed-readout">
-              <strong>{Math.round(session.race.speed * 3.6)}</strong>
-              <span>KM/H</span>
-            </div>
-          </>
-        )}
+        hud={() => <RacingHud session={session} />}
       />
     );
   return (

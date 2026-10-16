@@ -3,6 +3,7 @@ import type { Difficulty } from "@/game/types/game.types";
 import type { AttackPerformance, CombatEffect } from "@/game/systems/CombatSystem";
 import { boxingPresentation } from "@/game/systems/BoxingPresentation";
 import { boxingOpponents, type BoxingOpponentId } from "@/game/data/boxingOpponents";
+import { boxingMove, type BoxingMoveId, type BoxingStrike } from "@/game/data/boxingMoves";
 
 export interface RoundScore {
   round: number;
@@ -22,6 +23,7 @@ export class BoxingSystem {
   combo = 0;
   momentum = 0;
   counterReady = false;
+  selectedMove: BoxingMoveId | null = null;
   private punches = 0;
   defending = false;
   defenseRemaining = 0;
@@ -55,7 +57,31 @@ export class BoxingSystem {
     return this.opponent.beginner ? 60 : 80;
   }
   get staminaCost() {
-    return this.opponent.beginner ? 10 : 18;
+    return this.moveCost(this.nextMove);
+  }
+  moveCost(move: BoxingStrike) {
+    return (
+      (this.opponent.beginner ? 10 : 18) + (move === "counter" ? 0 : boxingMove(move).extraStamina)
+    );
+  }
+  canSelectMove(move: BoxingMoveId) {
+    return (
+      !this.finished &&
+      this.intermission === 0 &&
+      !this.defending &&
+      !this.counterReady &&
+      this.momentum >= boxingMove(move).charge &&
+      this.stamina >= this.moveCost(move)
+    );
+  }
+  selectMove(move: BoxingMoveId | null) {
+    if (this.finished || this.intermission > 0 || this.defending || this.counterReady) return false;
+    if (move !== null && !this.canSelectMove(move)) return false;
+    this.selectedMove = move;
+    return true;
+  }
+  get cooldownRemaining() {
+    return this.cooldown;
   }
   get defenseText() {
     return { easy: "guard up", normal: "slip and guard", hard: "slip duck and guard" }[
@@ -65,12 +91,13 @@ export class BoxingSystem {
   get multiplier() {
     return 1 + Math.min(this.combo, 5) * 0.1;
   }
-  get nextMove() {
+  get nextMove(): BoxingStrike {
     return this.counterReady
       ? "counter"
-      : this.momentum >= 3
-        ? "uppercut"
-        : ["jab", "cross", "hook"][this.punches % 3];
+      : (this.selectedMove ??
+          (this.momentum >= 3
+            ? "uppercut"
+            : (["jab", "cross", "hook"] as const)[this.punches % 3]));
   }
   resolve(id: string, stats: AttackPerformance): number {
     if (this.finished || this.intermission > 0 || this.resolved.has(id)) return 0;
@@ -83,6 +110,7 @@ export class BoxingSystem {
       this.nextAttack = this.attackInterval();
       this.stamina = clamp(this.stamina + (damage === 0 ? 18 : 5), 0, 100);
       this.counterReady = damage === 0;
+      this.selectedMove = null;
       this.effect = {
         serial: this.effect.serial + 1,
         source: "opponent",
@@ -94,7 +122,7 @@ export class BoxingSystem {
       this.checkKnockout();
       return 0;
     }
-    if (this.stamina < this.staminaCost || this.cooldown > 0) {
+    if (this.stamina < this.staminaCost) {
       this.stamina = clamp(this.stamina + 12, 0, 100);
       this.combo = 0;
       this.effect = {
@@ -107,10 +135,11 @@ export class BoxingSystem {
       };
       return 0;
     }
+    if (this.cooldown > 0) return 0;
     this.stamina = clamp(this.stamina - this.staminaCost, 0, 100);
-    this.cooldown = 0.7;
     const move = this.nextMove;
-    const bonus = move === "uppercut" ? 1.6 : move === "counter" ? 1.35 : 1;
+    this.cooldown = move === "flurry" ? 1.1 : 0.75;
+    const bonus = move === "counter" ? 1.35 : boxingMove(move).bonus;
     const damage = Math.min(
       this.enemyHealth,
       Math.round(
@@ -122,8 +151,13 @@ export class BoxingSystem {
     this.dealtThisRound += damage;
     this.combo = stats.accuracy >= 90 ? Math.min(5, this.combo + 1) : 0;
     this.momentum =
-      move === "uppercut" ? 0 : stats.accuracy >= 90 ? Math.min(3, this.momentum + 1) : 0;
+      move === "uppercut" || move === "flurry"
+        ? 0
+        : stats.accuracy >= 90
+          ? Math.min(3, this.momentum + 1)
+          : 0;
     this.counterReady = false;
+    this.selectedMove = null;
     this.punches++;
     this.effect = {
       serial: this.effect.serial + 1,
@@ -134,9 +168,10 @@ export class BoxingSystem {
         {
           jab: "Snap jab",
           cross: "One-two cross",
-          hook: "Heavy hook",
+          hook: "Body hook",
           uppercut: "Power uppercut",
           counter: "Counter cross",
+          flurry: "Ringside flurry",
         }[move] ?? "Punch combination",
       presentation: boxingPresentation(move, stats.accuracy),
     };
@@ -146,10 +181,11 @@ export class BoxingSystem {
   mistake() {
     this.combo = 0;
     this.momentum = 0;
+    if (this.selectedMove && boxingMove(this.selectedMove).charge > 0) this.selectedMove = null;
     this.stamina = clamp(this.stamina - 1, 0, 100);
   }
   update(dt: number) {
-    if (this.finished) return;
+    if (this.finished || !Number.isFinite(dt) || dt <= 0) return;
     this.elapsed += dt;
     this.cooldown = Math.max(0, this.cooldown - dt);
     this.stamina = clamp(this.stamina + dt * 4, 0, 100);
@@ -182,6 +218,7 @@ export class BoxingSystem {
         this.combo = 0;
         this.momentum = 0;
         this.counterReady = false;
+        this.selectedMove = null;
       }
     } else {
       this.nextAttack -= dt;
@@ -232,6 +269,7 @@ export class BoxingSystem {
     this.dealtThisRound = this.takenThisRound = this.combo = 0;
     this.momentum = 0;
     this.counterReady = false;
+    this.selectedMove = null;
     this.defending = false;
     this.defenseRemaining = 0;
     this.nextAttack = this.attackInterval();

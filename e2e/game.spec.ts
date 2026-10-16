@@ -145,7 +145,7 @@ test("boxing combinations, responsive HUD, and completion", async ({ page }) => 
   await waitForTyping(page);
   await expect(page.getByText("Rookie Ray", { exact: true })).toBeVisible();
   await expect(page.getByTestId("passage")).toHaveText(/^[a-z]{2,5}$/);
-  await expect(page.getByText("UPPERCUT CHARGE", { exact: true })).toBeVisible();
+  await expect(page.getByText("POWER CHARGE", { exact: true })).toBeVisible();
   await page.screenshot({ path: ".local/combat-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);

@@ -1,5 +1,6 @@
 import { useId } from "react";
 import type { Mode } from "@/game/types/game.types";
+import { BoxingArt } from "@/components/BoxingArt";
 
 /** Original vector artwork; shared visual language for menu and selection screens. */
 export function ArenaArt({
@@ -14,6 +15,7 @@ export function ArenaArt({
   className?: string;
 }) {
   const id = useId().replace(/:/g, "");
+  if (mode === "combat") return <BoxingArt className={className} />;
   return (
     <svg className={`arena-art ${className}`} viewBox="0 0 520 300" fill="none" aria-hidden="true">
       <defs>
@@ -105,7 +107,7 @@ export function ArenaArt({
             <path d="m77 220-44 3 36-15" fill={color} opacity=".7" />
           </g>
         </g>
-      ) : mode === "battle" ? (
+      ) : (
         <g>
           <circle cx="280" cy="144" r="104" stroke={color} strokeOpacity=".4" />
           <circle
@@ -154,58 +156,6 @@ export function ArenaArt({
             </>
           )}
           <path d="m157 260 251 16" stroke={color} strokeOpacity=".35" />
-        </g>
-      ) : (
-        <g>
-          <path
-            d="M40 218 283 80l211 107-220 122Z"
-            fill="#131527"
-            stroke={color}
-            strokeOpacity=".6"
-          />
-          <path
-            d="M47 163 274 291l215-160M47 141 274 269l215-160M47 119 274 247l215-160"
-            stroke={color}
-            strokeOpacity=".55"
-            strokeWidth="3"
-          />
-          <path d="M47 97v136m227-10v91M489 72v125" stroke="#5c4554" strokeWidth="9" />
-          <g transform="translate(0 -13)">
-            <path
-              d="m259 134-18 58-28 69 25 5 31-61 19 61 29-1-17-83-13-43Z"
-              fill="#1b182a"
-              stroke={color}
-              strokeWidth="2"
-            />
-            <path d="m257 117-16 53 61 10-13-56Z" fill={`url(#${id}-g)`} />
-            <path d="m248 81 10-18 28 2 14 18-9 31-26 5-15-20Z" fill="#b56e78" />
-            <path d="m251 85-3-19 27-15 22 16 4 18-22-8Z" fill="#141627" />
-            <path
-              d="m250 123-28 8-12-31-18 10 11 58 39-4m52-35 28-29 18 11-25 49-28-7"
-              stroke="#c4808c"
-              strokeWidth="17"
-              strokeLinejoin="round"
-            />
-            <rect
-              x="179"
-              y="73"
-              width="35"
-              height="40"
-              rx="12"
-              fill={color}
-              transform="rotate(-13 179 73)"
-            />
-            <rect
-              x="316"
-              y="76"
-              width="35"
-              height="40"
-              rx="12"
-              fill={color}
-              transform="rotate(18 316 76)"
-            />
-            <path d="m211 96 8-17m130 24 10-12" stroke="#ffd6dd" strokeWidth="3" />
-          </g>
         </g>
       )}
       <g fill={color} opacity=".65">

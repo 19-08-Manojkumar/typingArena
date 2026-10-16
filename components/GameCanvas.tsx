@@ -4,6 +4,7 @@ import type { GameSession } from "@/game/systems/GameSession";
 import { RacingSession } from "@/game/systems/RacingSession";
 import { BattleSession } from "@/game/systems/BattleSession";
 import { BoxingSession } from "@/game/systems/BoxingSession";
+import { raceViewportSize } from "@/game/systems/RacingPresentation";
 
 export function GameCanvas({
   session,
@@ -41,11 +42,16 @@ export function GameCanvas({
           key = "CombatScene";
         } else throw new Error("Unsupported game mode");
         if (cancelled || !container.current) return;
+        const canvasSize = () => {
+          const panel = container.current;
+          if (session.mode === "racing" && panel)
+            return raceViewportSize(panel.clientWidth, panel.clientHeight);
+          return { width: panel && panel.clientWidth < 600 ? 600 : 960, height: 410 };
+        };
         game = new Phaser.Game({
           type: Phaser.AUTO,
           parent: container.current,
-          width: session.mode !== "racing" && container.current.clientWidth < 600 ? 600 : 960,
-          height: 410,
+          ...canvasSize(),
           backgroundColor: "#101725",
           antialias: true,
           banner: false,
@@ -56,9 +62,9 @@ export function GameCanvas({
         });
         resizeObserver = new ResizeObserver(() => {
           if (!game || !container.current) return;
-          const width =
-            session.mode !== "racing" && container.current.clientWidth < 600 ? 600 : 960;
-          if (game.scale.gameSize.width !== width) game.scale.resize(width, 410);
+          const { width, height } = canvasSize();
+          if (game.scale.gameSize.width !== width || game.scale.gameSize.height !== height)
+            game.scale.setGameSize(width, height);
           game.scale.refresh();
         });
         resizeObserver.observe(container.current);

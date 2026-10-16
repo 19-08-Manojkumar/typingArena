@@ -3,6 +3,69 @@ import { BoxingSystem } from "@/game/systems/BoxingSystem";
 import { BoxingSession } from "@/game/systems/BoxingSession";
 const performance = { accuracy: 100, wpm: 50, combo: 4 };
 describe("boxing framework", () => {
+  it("selects a punch without spending stamina and uses it only once", () => {
+    const system = new BoxingSystem("easy", 50);
+    expect(system.selectMove("hook")).toBe(true);
+    expect(system.nextMove).toBe("hook");
+    expect(system.stamina).toBe(100);
+    expect(system.resolve("hook", performance)).toBeGreaterThan(0);
+    expect(system.effect.presentation?.abilityId).toBe("boxing-hook");
+    expect(system.selectedMove).toBeNull();
+    expect(system.stamina).toBe(82);
+  });
+  it("requires power and stamina for specials and consumes the flurry charge once", () => {
+    const system = new BoxingSystem("easy", 50);
+    expect(system.selectMove("flurry")).toBe(false);
+    system.momentum = 3;
+    system.stamina = 25;
+    expect(system.selectMove("flurry")).toBe(false);
+    system.stamina = 100;
+    expect(system.selectMove("flurry")).toBe(true);
+    const damage = system.resolve("flurry", performance);
+    expect(system.effect.presentation?.units).toBe(3);
+    expect(system.effect.presentation?.abilityId).toBe("boxing-flurry");
+    expect(system.momentum).toBe(0);
+    expect(system.stamina).toBe(70);
+    expect(system.damageDealt).toBe(damage);
+    expect(system.resolve("flurry", performance)).toBe(0);
+  });
+  it("clears a queued special on a mistake and blocks selection during defense, pause and breaks", () => {
+    const session = new BoxingSession("easy", 50);
+    expect(session.selectMove("jab")).toBe(false);
+    for (let i = 0; i < 31; i++) session.step(100);
+    session.boxing.momentum = 3;
+    expect(session.selectMove("uppercut")).toBe(true);
+    session.key("!");
+    expect(session.boxing.selectedMove).toBeNull();
+    session.pause();
+    expect(session.selectMove("hook")).toBe(false);
+    session.resume();
+    session.boxing.defending = true;
+    expect(session.selectMove("hook")).toBe(false);
+    session.boxing.defending = false;
+    session.boxing.intermission = 2;
+    expect(session.selectMove("hook")).toBe(false);
+  });
+  it("buffers a fast completed word until the previous punch returns to guard", () => {
+    const session = new BoxingSession("easy", 50, "practice");
+    for (let i = 0; i < 31; i++) session.step(100);
+    const typeWord = () => {
+      const snapshot = session.engine.snapshot();
+      for (const key of snapshot.passage) session.key(key);
+    };
+    typeWord();
+    const damage = session.boxing.damageDealt;
+    typeWord();
+    expect(session.boxing.damageDealt).toBe(damage);
+    expect(session.engine.snapshot().status).toBe("complete");
+    session.pause();
+    for (let i = 0; i < 10; i++) session.step(100);
+    expect(session.boxing.damageDealt).toBe(damage);
+    session.resume();
+    for (let i = 0; i < 8; i++) session.step(100);
+    expect(session.boxing.damageDealt).toBeGreaterThan(damage);
+    expect(session.engine.snapshot().status).toBe("running");
+  });
   it("gives practice players single words and never attacks", () => {
     const session = new BoxingSession("easy", 50, "practice");
     expect(session.engine.snapshot().passage).toMatch(/^[a-z]{2,5}$/);

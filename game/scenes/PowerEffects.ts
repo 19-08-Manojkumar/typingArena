@@ -1,355 +1,477 @@
-import * as Phaser from "phaser";
+import type * as Phaser from "phaser";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
+import { AttackVfx } from "@/game/scenes/AttackVfx";
 import { makeFighter } from "@/game/scenes/FighterArt";
+import { fighterMotion } from "@/game/scenes/FighterMotion";
 import { CelestialTempest } from "@/game/scenes/CelestialTempest";
 
 type Actor = Phaser.GameObjects.Container;
 
-/** Scene-owned timers, tweens and objects are paused/destroyed with the arena. */
+/** All twenty battle moves share timing and cleanup, but keep their own choreography. */
 export class PowerEffects {
-  constructor(private scene: Phaser.Scene) {}
+  private vfx: AttackVfx;
+  constructor(private scene: Phaser.Scene) {
+    this.vfx = new AttackVfx(scene);
+  }
 
   play(source: Actor, target: Actor, color: number, plan: AttackPresentation) {
-    const direction = source.x < target.x ? 1 : -1;
-    const supreme = plan.tier === "finisher";
-    this.charge(source.x, color, plan);
+    const d = source.x < target.x ? 1 : -1;
     switch (plan.fighterId) {
       case "ninja":
-        if (supreme) new CelestialTempest(this.scene).play(source, target, color, plan);
-        else this.crescents(source, target, color, plan, direction);
+        this.ninja(source, target, color, plan, d);
         break;
       case "swordsman":
-        this.skyBlade(target, color, plan, supreme);
+        this.swordsman(source, target, color, plan, d);
         break;
       case "hunter":
-        this.warden(source, target, color, plan, direction, supreme);
-        if (supreme) this.eclipse(source, target, color, plan, direction);
+        this.hunter(source, target, color, plan, d);
         break;
       case "brawler":
-        this.tide(source, target, color, plan, direction);
-        if (supreme) this.meteorFist(target, color, plan, direction);
+        this.brawler(source, target, color, plan, d);
         break;
     }
-    this.after(plan.impactMs, () => {
-      this.ring(target.x, 240, color, supreme ? 5.5 : 2.5, 650);
-      if (supreme) {
-        this.ring(target.x, 312, color, 8, 850, true);
-        this.fracture(target.x, color, plan.intensity);
+  }
+
+  private ninja(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x;
+    switch (p.abilityId) {
+      case "quick-strike":
+        fighterMotion(this.scene, source, target, p, "dash");
+        this.afterimages(source, target, "ninja", color, p, d, 3);
+        this.vfx.after(p.impactMs, () => this.vfx.slash(target.x, 224, color, 0.9, -40 * d));
+        break;
+      case "shadow-clone":
+        fighterMotion(this.scene, source, target, p, "cast");
+        this.legion(source, target, color, p, d, "ninja", 3);
+        break;
+      case "crescent-barrage":
+        fighterMotion(this.scene, source, target, p, "cast");
+        this.vfx.charge(x, 222, color, 500, 6);
+        this.legion(source, target, color, p, d, "ninja", 4);
+        this.volley(x + d * 60, target.x, color, p, "crescent", 5, 85, 0.85);
+        break;
+      case "energy-sphere":
+        fighterMotion(this.scene, source, target, p, "cast");
+        this.vfx.charge(x + d * 65, 213, color, p.impactMs - 320, 12);
+        this.energyBall(x + d * 65, target.x, color, p);
+        break;
+      case "celestial-tempest":
+        fighterMotion(this.scene, source, target, p, "cast");
+        this.vfx.charge(x, 224, color, 650, 8);
+        new CelestialTempest(this.scene).play(source, target, color, p);
+        break;
+    }
+  }
+
+  private swordsman(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x;
+    fighterMotion(this.scene, source, target, p, p.tier === "finisher" ? "cast" : "blade");
+    switch (p.abilityId) {
+      case "sword-slash":
+        this.vfx.after(p.impactMs - 50, () =>
+          this.vfx.slash(target.x - d * 20, 223, color, 1.1, -55 * d),
+        );
+        break;
+      case "rapid-blade":
+        for (let i = 0; i < 3; i++)
+          this.vfx.after(p.impactMs - 220 + i * 110, () => {
+            this.vfx.slash(target.x, 211 + i * 15, color, 1, (i % 2 ? 45 : -45) * d, 160);
+            this.vfx.burst(target.x, 225, color, 0.35);
+          });
+        break;
+      case "moonfall-cleave": {
+        const moon = this.vfx.art((x + target.x) / 2, 179, 2).setAlpha(0);
+        moon.fillStyle(color, 0.09).fillCircle(0, 0, 49);
+        moon.lineStyle(2, color, 0.7).strokeCircle(0, 0, 39);
+        this.scene.tweens.add({ targets: moon, alpha: 1, duration: 300 });
+        this.vfx.fade(moon, 350, p.impactMs);
+        this.vfx.after(p.impactMs - 330, () => {
+          this.vfx.projectile(x + d * 65, 180, target.x, 244, color, 330, "crescent", 1.6);
+        });
+        this.vfx.after(p.impactMs, () => this.vfx.slash(target.x, 230, color, 1.7, -65 * d));
+        break;
       }
-    });
-  }
-
-  private after(delay: number, callback: () => void) {
-    this.scene.time.delayedCall(delay, callback);
-  }
-
-  private fade(object: Phaser.GameObjects.Graphics | Actor, delay: number, duration = 300) {
-    this.scene.tweens.add({
-      targets: object,
-      alpha: 0,
-      delay,
-      duration,
-      onComplete: () => object.destroy(),
-    });
-  }
-
-  private ring(x: number, y: number, color: number, scale: number, duration: number, flat = false) {
-    const ring = this.scene.add.graphics().setPosition(x, y).setDepth(8);
-    ring.lineStyle(3, color, 0.85);
-    ring.strokeEllipse(0, 0, 65, flat ? 16 : 65);
-    ring.lineStyle(1, 0xeaf3ff, 0.7);
-    ring.strokeEllipse(0, 0, 52, flat ? 12 : 52);
-    this.scene.tweens.add({
-      targets: ring,
-      scale,
-      alpha: 0,
-      duration,
-      onComplete: () => ring.destroy(),
-    });
-  }
-
-  private charge(x: number, color: number, plan: AttackPresentation) {
-    const count = Math.min(16, plan.units);
-    for (let i = 0; i < count; i++) {
-      this.after(i * 55, () => {
-        const angle = (i / count) * Math.PI * 2;
-        const spark = this.scene.add
-          .image(x + Math.cos(angle) * 100, 220 + Math.sin(angle) * 90, "arena-spark")
-          .setTint(color)
-          .setScale(0.7)
-          .setDepth(7);
+      case "phantom-strike":
+        this.afterimages(source, target, "swordsman", color, p, d, 5);
         this.scene.tweens.add({
-          targets: spark,
+          targets: source,
+          alpha: 0.3,
+          duration: 180,
+          hold: p.impactMs - 360,
+          yoyo: true,
+        });
+        for (let i = 0; i < 4; i++)
+          this.vfx.after(p.impactMs - 420 + i * 140, () => {
+            this.vfx.slash(
+              target.x + (i % 2 ? 16 : -16),
+              211 + (i % 2) * 24,
+              color,
+              1.35,
+              (i % 2 ? 40 : -40) * d,
+              180,
+            );
+          });
+        this.vfx.after(p.impactMs, () => {
+          this.vfx.slash(target.x, 232, 0xecfaff, 1.6, 45);
+          this.vfx.slash(target.x, 232, color, 1.6, -45);
+        });
+        break;
+      case "heaven-splitter":
+        this.vfx.charge(x, 219, color, p.impactMs - 350, 14);
+        this.heavenBlade(target.x, color, p);
+        break;
+    }
+  }
+
+  private hunter(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x;
+    fighterMotion(this.scene, source, target, p, "cast");
+    switch (p.abilityId) {
+      case "shadow-strike":
+        this.vfx.after(70, () =>
+          this.vfx.projectile(x + d * 55, 223, target.x, 225, color, p.impactMs - 70, "bolt"),
+        );
+        break;
+      case "shadow-summon":
+        this.beast(source, target, color, p, d);
+        break;
+      case "night-warden":
+        this.warden(source, target, color, p, d);
+        break;
+      case "shadow-army":
+        this.vfx.charge(x, 225, color, 500, 7);
+        this.legion(source, target, color, p, d, "hunter", 8);
+        this.vfx.after(p.impactMs, () => this.vfx.ground(target.x, color, 1.5));
+        break;
+      case "eclipse-dominion": {
+        const sun = this.vfx
+          .art((x + target.x) / 2, 176, 2)
+          .setScale(0.25)
+          .setAlpha(0);
+        sun.fillStyle(color, 0.13).fillCircle(0, 0, 60);
+        sun.lineStyle(5, color, 0.8).strokeCircle(0, 0, 46);
+        sun.fillStyle(0x030512).fillCircle(0, 0, 42);
+        sun.lineStyle(1, 0xddaaff, 0.8).strokeCircle(0, 0, 52);
+        this.scene.tweens.add({ targets: sun, scale: 1, alpha: 1, duration: 650 });
+        this.vfx.fade(sun, 650, p.impactMs);
+        this.legion(source, target, color, p, d, "hunter", 8);
+        this.vfx.portal(target.x, 321, color, 80, p.impactMs + 150);
+        this.vfx.after(p.impactMs - 240, () => {
+          const pillar = this.vfx.art(target.x, 315, 7).setScale(1, 0.1);
+          pillar.fillStyle(color, 0.12).fillRect(-48, -166, 96, 166);
+          pillar.fillStyle(color, 0.4).fillTriangle(-25, 0, 0, -176, 25, 0);
+          pillar.lineStyle(3, 0xe5cfff).lineBetween(0, 0, 0, -166);
+          this.scene.tweens.add({ targets: pillar, scaleY: 1, duration: 240 });
+          this.vfx.fade(pillar, 420, 240);
+        });
+        this.vfx.after(p.impactMs, () => {
+          this.vfx.burst(target.x, 234, color, 3);
+          this.vfx.ground(target.x, color, 3);
+        });
+        break;
+      }
+    }
+  }
+
+  private brawler(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x;
+    const slam = p.abilityId === "power-smash" || p.abilityId === "worldbreaker";
+    fighterMotion(this.scene, source, target, p, slam ? "slam" : "punch");
+    switch (p.abilityId) {
+      case "heavy-punch":
+        this.vfx.after(p.impactMs - 120, () => {
+          this.vfx.projectile(target.x - d * 125, 224, target.x, 224, color, 120, "wave", 0.5);
+        });
+        break;
+      case "power-smash":
+        this.vfx.charge(x, 234, color, p.impactMs - 240, 5);
+        this.vfx.after(p.impactMs, () => {
+          this.vfx.slash(target.x, 263, color, 1.25, 70 * d);
+          this.vfx.ground(target.x, color, 1.7);
+        });
+        break;
+      case "tidal-breaker":
+        this.vfx.charge(x, 230, color, 500, 7);
+        this.volley(x + d * 55, target.x, color, p, "wave", 3, 130, 1.05);
+        this.vfx.after(p.impactMs, () => this.vfx.ground(target.x, color, 2));
+        break;
+      case "finisher":
+        this.vfx.charge(x + d * 65, 220, color, p.impactMs - 300, 12);
+        this.fist(x + d * 65, 223, target.x, color, p, d, false);
+        break;
+      case "worldbreaker":
+        this.vfx.charge(x, 230, color, p.impactMs - 330, 14);
+        this.fist((x + target.x) / 2, 188, target.x, color, p, d, true);
+        this.vfx.after(p.impactMs, () => {
+          this.vfx.ground(target.x, color, 3);
+          this.vfx.ring(target.x, 319, color, 115, true, 90);
+          this.vfx.ring(target.x, 319, color, 140, true, 180);
+        });
+        break;
+    }
+  }
+
+  private volley(
+    x: number,
+    target: number,
+    color: number,
+    p: AttackPresentation,
+    style: "crescent" | "wave",
+    count: number,
+    spacing: number,
+    size: number,
+  ) {
+    for (let i = 0; i < count; i++)
+      this.vfx.after(p.impactMs - 300 - (count - 1 - i) * spacing, () => {
+        const y = style === "wave" ? 268 : 196 + (i % 3) * 28;
+        this.vfx.projectile(
           x,
-          y: 225,
-          scale: 0,
-          duration: 600,
-          onComplete: () => spark.destroy(),
-        });
-      });
-    }
-    this.ring(x, 312, color, plan.tier === "finisher" ? 4 : 2, plan.impactMs, true);
-  }
-
-  private crescents(
-    source: Actor,
-    target: Actor,
-    color: number,
-    plan: AttackPresentation,
-    direction: number,
-  ) {
-    const count = Math.min(plan.units, 9);
-    for (let i = 0; i < count; i++) {
-      this.after(i * 65, () => {
-        const y = 150 + (i % 3) * 38;
-        const clone = makeFighter(
-          this.scene,
-          source.x - direction * (30 + (i % 3) * 25),
+          y,
+          target,
+          style === "wave" ? 263 : 220 + (i % 3) * 10,
           color,
-          direction < 0,
-          "ninja",
-        )
-          .setScale(direction * 0.55, 0.55)
-          .setAlpha(0.5)
-          .setDepth(6);
-        this.fade(clone, plan.impactMs - i * 65, 250);
-        const arc = this.scene.add.graphics().setPosition(source.x, y).setDepth(8);
-        arc.lineStyle(8, color, 0.7);
-        arc.beginPath();
-        arc.arc(0, 0, 25, -1.5, 1.5);
-        arc.strokePath();
-        arc.lineStyle(2, 0xf0f5ff);
-        arc.beginPath();
-        arc.arc(0, 0, 30, -1.5, 1.5);
-        arc.strokePath();
-        arc.setScale(direction, 1);
-        this.scene.tweens.add({
-          targets: arc,
-          x: target.x,
-          y: 225,
-          angle: direction * 180,
-          delay: Math.max(80, plan.impactMs - i * 65 - 420),
-          duration: 400,
-          ease: "Cubic.easeIn",
-          onComplete: () => arc.destroy(),
-        });
+          300,
+          style,
+          size,
+        );
+        this.vfx.after(300, () => this.vfx.burst(target, 234, color, 0.55));
       });
-    }
   }
 
-  private skyBlade(target: Actor, color: number, plan: AttackPresentation, supreme: boolean) {
-    const blade = this.scene.add.graphics().setPosition(target.x, 120).setDepth(8).setScale(0.02);
-    if (supreme) {
-      blade.fillStyle(color, 0.22);
-      blade.fillTriangle(-75, -115, 75, -115, 0, 175);
-      blade.fillStyle(color, 0.9);
-      blade.fillTriangle(-26, -100, 26, -100, 0, 140);
-      blade.fillStyle(0xf1f6ff);
-      blade.fillTriangle(-7, -100, 7, -100, 0, 140);
-      blade.lineStyle(6, color);
-      blade.lineBetween(-60, -65, 60, -65);
-    } else {
-      blade.lineStyle(16, color, 0.65);
-      blade.beginPath();
-      blade.arc(0, 0, 88, -1.4, 1.4);
-      blade.strokePath();
-      blade.lineStyle(3, 0xf0f6ff);
-      blade.beginPath();
-      blade.arc(0, 0, 98, -1.4, 1.4);
-      blade.strokePath();
-      blade.setAngle(-45);
-    }
-    this.scene.tweens.add({
-      targets: blade,
-      scale: supreme ? 1 + plan.quality * 0.35 : 1,
-      duration: plan.impactMs - 300,
-    });
-    this.scene.tweens.add({
-      targets: blade,
-      y: 210,
-      angle: supreme ? 0 : 30,
-      delay: plan.impactMs - 280,
-      duration: 270,
-      ease: "Cubic.easeIn",
-    });
-    this.fade(blade, plan.impactMs, 400);
-    if (supreme) {
-      for (let i = 0; i < 6; i++)
-        this.after(plan.impactMs - 300 + i * 70, () => {
-          const cut = this.scene.add.graphics().setPosition(target.x, 220).setDepth(9);
-          cut.lineStyle(3, color, 0.75);
-          cut.lineBetween(-170, (i - 3) * 32, 170, -(i - 3) * 32);
-          this.fade(cut, 60, 350);
-        });
-    }
+  private afterimages(
+    source: Actor,
+    target: Actor,
+    kind: string,
+    color: number,
+    p: AttackPresentation,
+    d: number,
+    count: number,
+  ) {
+    const x = source.x;
+    for (let i = 0; i < count; i++)
+      this.vfx.after(p.impactMs - 210 + i * 35, () => {
+        const distance = Math.abs(target.x - x) - 110;
+        const ghost = makeFighter(
+          this.scene,
+          x + d * (20 + (i * distance) / count),
+          color,
+          d < 0,
+          kind,
+        )
+          .setAlpha(0.2 + i * 0.03)
+          .setDepth(4);
+        this.vfx.fade(ghost, 130);
+      });
   }
 
-  private warden(
+  private legion(
     source: Actor,
     target: Actor,
     color: number,
-    plan: AttackPresentation,
-    direction: number,
-    supreme: boolean,
+    p: AttackPresentation,
+    d: number,
+    kind: string,
+    desired: number,
   ) {
-    const x = source.x - direction * 30;
-    const guardian = makeFighter(this.scene, x, color, direction < 0, "hunter", true)
-      .setDepth(6)
-      .setY(300)
-      .setScale(direction * 0.1, 0.01)
-      .setAlpha(0);
-    const size = supreme ? 2.2 : 1.6;
-    this.scene.tweens.add({
-      targets: guardian,
-      scaleX: direction * size,
-      scaleY: size,
-      alpha: 0.9,
-      duration: supreme ? 850 : 450,
-    });
-    const scythe = this.scene.add
-      .graphics()
-      .setPosition(x + direction * 65, 190)
-      .setDepth(7)
-      .setAlpha(0);
-    scythe.lineStyle(5, color);
-    scythe.lineBetween(0, -80, 0, 115);
-    scythe.lineStyle(9, color, 0.8);
-    scythe.beginPath();
-    scythe.arc(0, -35, 55, -1.6, 0.8);
-    scythe.strokePath();
-    this.scene.tweens.add({ targets: scythe, alpha: 1, duration: 400 });
-    this.scene.tweens.add({
-      targets: scythe,
-      x: target.x,
-      angle: direction * 100,
-      delay: plan.impactMs - 350,
-      duration: 340,
-      ease: "Cubic.easeIn",
-    });
-    this.scene.tweens.add({
-      targets: guardian,
-      x: target.x - direction * 75,
-      delay: plan.impactMs - 350,
-      duration: 340,
-      ease: "Cubic.easeIn",
-    });
-    this.fade(guardian, plan.impactMs, 600);
-    this.fade(scythe, plan.impactMs, 400);
-  }
-
-  private eclipse(
-    source: Actor,
-    target: Actor,
-    color: number,
-    plan: AttackPresentation,
-    direction: number,
-  ) {
-    const sun = this.scene.add.graphics().setPosition(480, 175).setScale(0.05).setDepth(2);
-    sun.fillStyle(color, 0.16);
-    sun.fillCircle(0, 0, 93);
-    sun.lineStyle(5, color, 0.8);
-    sun.strokeCircle(0, 0, 72);
-    sun.fillStyle(0x02030c);
-    sun.fillCircle(0, 0, 68);
-    this.scene.tweens.add({ targets: sun, scale: 1.3, duration: 1000 });
-    this.fade(sun, plan.impactMs, 800);
-    for (let i = 0; i < Math.min(plan.units, 20); i++)
-      this.after(i * 45, () => {
-        const x = source.x - direction * (20 + (i % 5) * 25);
-        this.ring(x, 315, color, 1.1, 700, true);
-        const shade = makeFighter(this.scene, x, color, direction < 0, "hunter", true)
-          .setDepth(4 + (i % 3))
-          .setY(295 + (i % 3) * 10)
-          .setScale(direction * 0.45, 0.03)
-          .setAlpha(0.75);
-        this.scene.tweens.add({ targets: shade, scaleY: 0.45, duration: 250 });
+    const gap = Math.abs(target.x - source.x);
+    const columns = Math.min(gap < 380 ? 3 : 4, Math.ceil(desired / 2));
+    const count = Math.min(desired, columns * 2);
+    for (let i = 0; i < count; i++) {
+      const column = Math.floor(i / 2);
+      const row = i % 2;
+      const x = source.x + d * (95 + (column * (gap - 190)) / Math.max(1, columns - 1));
+      const y = row ? 323 : 236;
+      const summonAt = i * 40;
+      const launchAt = p.impactMs - 300 - (count - 1 - i) * 75;
+      this.vfx.after(summonAt, () => {
+        this.vfx.portal(x, y + 19, color, 25, launchAt - summonAt + 80);
+        const shade = makeFighter(this.scene, x, color, d < 0, kind, kind === "hunter")
+          .setName("battle-summon")
+          .setDepth(6)
+          .setY(y + 14)
+          .setScale(d * 0.43, 0.43)
+          .setAlpha(0);
         this.scene.tweens.add({
           targets: shade,
-          x: target.x + direction * ((i % 5) * 15 - 25),
-          delay: plan.impactMs - i * 45 - 450,
-          duration: 420,
-          ease: "Cubic.easeIn",
+          y,
+          alpha: 0.95,
+          duration: 180,
+          ease: "Sine.easeOut",
         });
-        this.fade(shade, plan.impactMs - i * 45, 400);
-      });
-  }
-
-  private tide(
-    source: Actor,
-    target: Actor,
-    color: number,
-    plan: AttackPresentation,
-    direction: number,
-  ) {
-    const count = plan.tier === "finisher" ? 6 : 3;
-    for (let i = 0; i < count; i++)
-      this.after(i * 100, () => {
-        const wave = this.scene.add.graphics().setPosition(source.x, 265).setDepth(7);
-        wave.lineStyle(13, color, 0.3);
-        wave.beginPath();
-        wave.arc(0, 0, 45 + i * 7, -1.5, 1.5);
-        wave.strokePath();
-        wave.lineStyle(3, color, 0.9);
-        wave.beginPath();
-        wave.arc(0, 0, 52 + i * 7, -1.5, 1.5);
-        wave.strokePath();
-        wave.setScale(direction, 1);
-        this.scene.tweens.add({
-          targets: wave,
-          x: target.x,
-          scaleY: 1.4,
-          delay: plan.impactMs - i * 100 - 500,
-          duration: 480,
-          ease: "Cubic.easeIn",
-          onComplete: () => wave.destroy(),
+        this.vfx.after(launchAt - summonAt, () => {
+          this.scene.tweens.add({
+            targets: shade,
+            x: target.x - d * 40,
+            y: row ? 287 : 235,
+            angle: d * 12,
+            duration: 230,
+            ease: "Cubic.easeIn",
+            onComplete: () => {
+              this.vfx.slash(target.x, row ? 253 : 216, color, 0.65, row ? 40 : -40, 130);
+              this.vfx.fade(shade, 100);
+            },
+          });
         });
       });
-  }
-
-  private meteorFist(target: Actor, color: number, plan: AttackPresentation, direction: number) {
-    const fist = this.scene.add
-      .graphics()
-      .setPosition(target.x - direction * 120, 125)
-      .setScale(0.02)
-      .setDepth(8);
-    fist.fillStyle(color, 0.15);
-    fist.fillEllipse(-direction * 35, -25, 170, 130);
-    fist.fillStyle(color, 0.95);
-    fist.fillRoundedRect(-50, -35, 100, 70, 16);
-    fist.lineStyle(3, 0xffeddf, 0.9);
-    fist.strokeRoundedRect(-50, -35, 100, 70, 16);
-    for (let i = 0; i < 3; i++) fist.lineBetween(-22 + i * 24, -32, -22 + i * 24, -8);
-    fist.fillStyle(color);
-    fist.fillRoundedRect(15, 16, 48, 30, 12);
-    fist.setAngle(direction * 28);
-    this.scene.tweens.add({
-      targets: fist,
-      scale: 1.2 + plan.quality * 0.5,
-      duration: plan.impactMs - 350,
-    });
-    this.scene.tweens.add({
-      targets: fist,
-      x: target.x,
-      y: 245,
-      delay: plan.impactMs - 330,
-      duration: 320,
-      ease: "Cubic.easeIn",
-    });
-    this.fade(fist, plan.impactMs, 350);
-  }
-
-  private fracture(x: number, color: number, intensity: number) {
-    const cracks = this.scene.add.graphics().setPosition(x, 314).setDepth(3);
-    cracks.lineStyle(2, color, 0.9);
-    for (let i = 0; i < 9; i++) {
-      const angle = (i / 9) * Math.PI * 2;
-      const distance = 60 + intensity * 25;
-      cracks.beginPath();
-      cracks.moveTo(0, 0);
-      cracks.lineTo(Math.cos(angle) * distance * 0.5, Math.sin(angle) * 18);
-      cracks.lineTo(Math.cos(angle + 0.15) * distance, Math.sin(angle + 0.15) * 40);
-      cracks.strokePath();
     }
-    this.fade(cracks, 200, 650);
+  }
+
+  private energyBall(x: number, target: number, color: number, p: AttackPresentation) {
+    const ball = this.scene.add.container(x, 216).setDepth(8).setScale(0.15);
+    const core = this.vfx.art(0, 0);
+    core.fillStyle(color, 0.1).fillCircle(0, 0, 49);
+    core.fillStyle(color, 0.4).fillCircle(0, 0, 34);
+    core.fillStyle(0xbceaff).fillCircle(0, 0, 22);
+    core.fillStyle(0xf3fcff).fillCircle(0, 0, 12);
+    const orbit = this.vfx.art(0, 0);
+    for (let i = 0; i < 3; i++) {
+      orbit.lineStyle(2, i % 2 ? color : 0xe6faff, 0.9);
+      orbit
+        .beginPath()
+        .arc(0, 0, 36 + i * 4, i * 2.1, i * 2.1 + 1.5)
+        .strokePath();
+    }
+    ball.add([core, orbit]);
+    this.scene.tweens.add({ targets: ball, scale: 1.15, duration: p.impactMs - 330 });
+    this.scene.tweens.add({ targets: orbit, angle: 600, duration: p.impactMs });
+    this.vfx.after(p.impactMs - 300, () => {
+      this.scene.tweens.add({
+        targets: ball,
+        x: target,
+        y: 229,
+        duration: 300,
+        ease: "Cubic.easeIn",
+        onComplete: () => {
+          ball.destroy();
+          this.vfx.burst(target, 229, color, 2.5);
+        },
+      });
+    });
+  }
+
+  private heavenBlade(x: number, color: number, p: AttackPresentation) {
+    const blade = this.vfx.art(x, 186).setScale(0.15).setAlpha(0);
+    blade.fillStyle(color, 0.1).fillTriangle(-49, -45, 49, -45, 0, 98);
+    blade.fillStyle(color, 0.85).fillTriangle(-17, -44, 17, -44, 0, 86);
+    blade.fillStyle(0xf1fbff).fillTriangle(-5, -44, 5, -44, 0, 86);
+    blade.lineStyle(5, color).lineBetween(-34, -18, 34, -18);
+    blade.lineStyle(4, 0xe8faff).lineBetween(0, -38, 0, -61);
+    this.scene.tweens.add({ targets: blade, scale: 1.05, alpha: 1, duration: p.impactMs - 350 });
+    this.vfx.after(p.impactMs - 280, () => {
+      this.scene.tweens.add({ targets: blade, y: 223, duration: 280, ease: "Cubic.easeIn" });
+    });
+    this.vfx.fade(blade, 270, p.impactMs);
+    this.vfx.after(p.impactMs, () => {
+      const fissure = this.vfx.art(x, 140, 9);
+      fissure.lineStyle(19, color, 0.16).lineBetween(0, 0, 0, 183);
+      fissure.lineStyle(6, color).lineBetween(0, 0, 0, 183);
+      fissure.lineStyle(2, 0xf4fdff).lineBetween(0, 0, 0, 183);
+      this.vfx.fade(fissure, 400);
+      this.vfx.slash(x, 242, color, 1.9, -45);
+      this.vfx.slash(x, 242, 0xd2efff, 1.9, 45);
+      this.vfx.ground(x, color, 2.5);
+    });
+  }
+
+  private beast(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x + d * 100;
+    this.vfx.portal(x, 319, color, 45, p.impactMs);
+    const beast = this.scene.add
+      .container(x, 325)
+      .setScale(d * 0.8, 0.8)
+      .setDepth(6)
+      .setAlpha(0);
+    const art = this.vfx.art(0, 0);
+    art.fillStyle(0x10162e).fillEllipse(-5, -39, 83, 35);
+    art.fillTriangle(15, -52, 45, -69, 57, -33);
+    art.fillTriangle(32, -59, 30, -83, 46, -64);
+    art.fillTriangle(-35, -43, -64, -72, -45, -32);
+    art.lineStyle(2, color).lineBetween(-39, -48, 13, -54).lineBetween(13, -54, 44, -70);
+    art.fillStyle(0xe8cfff).fillTriangle(34, -57, 47, -56, 37, -52);
+    beast.add(art);
+    for (let i = 0; i < 4; i++) {
+      const leg = this.vfx.art(-26 + i * 17, -28);
+      leg.lineStyle(7, 0x1c2444).lineBetween(0, 0, i % 2 ? 12 : -8, 26);
+      leg.lineStyle(2, color, 0.75).lineBetween(0, 2, i % 2 ? 12 : -8, 26);
+      beast.add(leg);
+      this.scene.tweens.add({
+        targets: leg,
+        angle: i % 2 ? 22 : -22,
+        duration: 110,
+        yoyo: true,
+        repeat: 2,
+      });
+    }
+    this.scene.tweens.add({ targets: beast, alpha: 1, y: 313, duration: 230 });
+    this.vfx.after(p.impactMs - 280, () => {
+      this.scene.tweens.add({
+        targets: beast,
+        x: target.x - d * 45,
+        duration: 280,
+        ease: "Cubic.easeIn",
+        onComplete: () => {
+          for (let i = 0; i < 3; i++)
+            this.vfx.slash(target.x - 10 + i * 12, 231 + i * 10, color, 0.7, -65, 190);
+          this.vfx.fade(beast, 180);
+        },
+      });
+    });
+  }
+
+  private warden(source: Actor, target: Actor, color: number, p: AttackPresentation, d: number) {
+    const x = source.x + d * 110;
+    this.vfx.portal(x, 319, color, 55, p.impactMs);
+    const guardian = makeFighter(this.scene, x, color, d < 0, "hunter", true)
+      .setDepth(6)
+      .setY(313)
+      .setScale(d * 0.9, 0.9)
+      .setAlpha(0);
+    const scythe = this.vfx.art(35, -70);
+    scythe.lineStyle(4, 0xe0caff).lineBetween(0, -55, 0, 82);
+    scythe.lineStyle(8, color).beginPath().arc(0, -30, 33, -1.8, 0.8).strokePath();
+    guardian.add(scythe);
+    this.scene.tweens.add({ targets: guardian, y: 280, alpha: 1, duration: 350 });
+    this.vfx.after(p.impactMs - 300, () => {
+      this.scene.tweens.add({ targets: scythe, angle: 100, duration: 300, ease: "Cubic.easeIn" });
+      this.vfx.projectile(x + d * 40, 217, target.x, 238, color, 300, "crescent", 1.5);
+    });
+    this.vfx.fade(guardian, 270, p.impactMs);
+  }
+
+  private fist(
+    x: number,
+    y: number,
+    target: number,
+    color: number,
+    p: AttackPresentation,
+    d: number,
+    meteor: boolean,
+  ) {
+    const fist = this.vfx
+      .art(x, y)
+      .setScale(d * 0.1, 0.1)
+      .setAngle(meteor ? d * 24 : 0);
+    fist.fillStyle(color, 0.12).fillEllipse(-18, 0, 122, 94);
+    fist.fillStyle(color, 0.95).fillRoundedRect(-32, -29, 65, 55, 12);
+    fist.lineStyle(2, 0xffefdc).strokeRoundedRect(-32, -29, 65, 55, 12);
+    fist.fillStyle(color).fillRoundedRect(4, 14, 39, 22, 8);
+    for (let i = 0; i < 3; i++) fist.lineBetween(-18 + i * 17, -27, -18 + i * 17, -9);
+    this.scene.tweens.add({
+      targets: fist,
+      scaleX: d * (meteor ? 1.25 : 1),
+      scaleY: meteor ? 1.25 : 1,
+      duration: p.impactMs - 330,
+    });
+    this.vfx.after(p.impactMs - 300, () => {
+      this.scene.tweens.add({
+        targets: fist,
+        x: target,
+        y: 246,
+        duration: 300,
+        ease: "Cubic.easeIn",
+      });
+    });
+    this.vfx.fade(fist, 230, p.impactMs);
+    this.vfx.after(p.impactMs, () => this.vfx.burst(target, 245, color, meteor ? 3 : 2));
   }
 }
