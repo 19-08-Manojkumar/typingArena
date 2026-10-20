@@ -2,6 +2,50 @@ import { test, expect } from "@playwright/test";
 
 test.setTimeout(120000);
 
+test("racing serves fresh text after completion, replay and page reload", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/racing");
+  await page.getByLabel("AI DIFFICULTY").selectOption("easy");
+  await page.getByLabel("RACE DISTANCE").selectOption("2200");
+  await page.getByLabel("PASSAGE LENGTH").selectOption("short");
+  await page.getByRole("button", { name: /Pulse GT/ }).click();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 45000 });
+  const input = page.getByTestId("typing-input");
+  const passage = page.getByTestId("passage");
+  await expect(input).toBeEnabled();
+  const seen = [await passage.innerText()];
+  for (let i = 0; i < 3; i++) {
+    await input.focus();
+    await page.keyboard.type(seen.at(-1)!, { delay: 2 });
+    await expect(passage).not.toHaveText(seen.at(-1)!);
+    seen.push(await passage.innerText());
+    await expect(input).toBeFocused();
+  }
+  await page.getByRole("button", { name: "Restart game" }).click();
+  await expect(passage).not.toHaveText(seen.at(-1)!);
+  seen.push(await passage.innerText());
+  expect(new Set(seen).size).toBe(seen.length);
+  const unused = await page.evaluate(
+    () =>
+      JSON.parse(sessionStorage.getItem("typing-arena:racing-passages:easy:v1")!).remaining.length,
+  );
+  await page.reload();
+  await page.getByLabel("AI DIFFICULTY").selectOption("easy");
+  await page.getByLabel("PASSAGE LENGTH").selectOption("short");
+  await page.getByRole("button", { name: /Pulse GT/ }).click();
+  await expect(passage).not.toHaveText(seen.at(-1)!);
+  expect(seen).not.toContain(await passage.innerText());
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(sessionStorage.getItem("typing-arena:racing-passages:easy:v1")!).remaining
+          .length,
+    ),
+  ).toBe(unused - 1);
+  expect(errors).toEqual([]);
+});
+
 test("racing dashboard, nitro, pause, mobile resize and replay", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

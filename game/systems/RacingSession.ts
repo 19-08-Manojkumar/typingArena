@@ -4,7 +4,6 @@ import { getPassage } from "@/game/data/passages";
 import type { Difficulty, PassageLength, Vehicle } from "@/game/types/game.types";
 export class RacingSession extends GameSession {
   readonly race: RacingSystem;
-  private passageIndex = 0;
   constructor(
     vehicle: Vehicle,
     distance: number,
@@ -17,7 +16,7 @@ export class RacingSession extends GameSession {
       if (event.kind === "correct" && event.rewarded) this.race.correct(event.snapshot);
       if (event.kind === "incorrect") this.race.mistake();
       if (event.kind === "complete")
-        this.engine.nextPassage(getPassage(this.difficulty, this.length, ++this.passageIndex));
+        this.engine.nextPassage(getPassage(this.difficulty, this.length));
     });
   }
   nitro() {
