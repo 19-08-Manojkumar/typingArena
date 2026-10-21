@@ -1,3 +1,4 @@
+import { HeroCinematics } from "@/game/scenes/HeroCinematics";
 import { fighterSocket } from "@/game/scenes/PortraitFighter";
 import type * as Phaser from "phaser";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
@@ -18,9 +19,11 @@ export class HeroPowerEffects {
   play(source: Actor, target: Actor, color: number, p: AttackPresentation) {
     if (p.fighterId === "ember") {
       new EmberAttacks(this.scene).play(source, target, color, p);
+      new HeroCinematics(this.scene).play(source, target, color, p);
       return;
     }
     heroAttackMotion(this.scene, source, target, p);
+    new HeroCinematics(this.scene).play(source, target, color, p);
     const d = source.scaleX < 0 ? -1 : 1;
     const x = source.x;
     const hit = target.x;
@@ -119,34 +122,9 @@ export class HeroPowerEffects {
         });
         break;
       case "daybreak-ascension": {
-        const centre = (x + hit) / 2;
         this.seal(x, color, p.impactMs, 65);
-        this.vfx.charge(x, 220, color, 850, 8);
-        this.sun(centre, 151, color, p.impactMs, 1.25);
-        for (const side of [-1, 1])
-          this.vfx.after(420, () => {
-            const rays = this.art(x, 223, "dawn-rays").setScale(side * d * 0.1, 0.2);
-            rays.fillStyle(color, 0.12).fillTriangle(0, 0, 110, -80, 75, 24);
-            rays.lineStyle(2, 0xffefd1, 0.65).lineBetween(0, 0, 98, -50);
-            this.scene.tweens.add({
-              targets: rays,
-              scaleX: side * d,
-              scaleY: 1,
-              duration: 450,
-              ease: "Sine.easeOut",
-            });
-            this.vfx.fade(rays, 300, p.impactMs - 420);
-          });
-        this.vfx.after(p.impactMs - 300, () =>
-          this.beam(
-            { x: centre, y: 151 },
-            { x: hit, y: 255 },
-            [color, 0xfff1bd, 0xffffff],
-            300,
-            "daybreak",
-            34,
-          ),
-        );
+        this.vfx.charge(x, 214, color, 850, 8);
+        this.ascension(source, target, color, p);
         this.vfx.ring(hit, 239, color, 82, false, p.impactMs);
         this.vfx.ring(hit, 319, color, 120, true, p.impactMs + 90);
         this.vfx.after(p.impactMs, () => this.particles(hit, 238, color, 12, 90, "light"));
@@ -270,6 +248,114 @@ export class HeroPowerEffects {
         break;
       }
     }
+  }
+
+  private ascension(source: Actor, target: Actor, color: number, p: AttackPresentation) {
+    const d = source.scaleX < 0 ? -1 : 1,
+      release = p.impactMs - 330;
+    const sun = this.vfx.art(source.x, 164, 4).setName("hero-ascension-sun");
+    const trail = this.art(0, 0, "ascension-sun-wake");
+    const history: Point[] = [];
+    let origin: Point | undefined;
+    this.scene.tweens.addCounter({
+      from: 0,
+      to: p.impactMs + 360,
+      duration: p.impactMs + 360,
+      onUpdate: (tween) => {
+        const ms = Number(tween.getValue()),
+          charge = Math.min(1, ms / 1100),
+          flight = Math.max(0, Math.min(1, (ms - release) / 330));
+        const after = Math.max(0, Math.min(1, (ms - p.impactMs) / 360));
+        const attached = { x: source.x + d * 44, y: Math.max(117, source.y - 112) };
+        if (ms >= release) origin ??= attached;
+        const start = origin ?? attached,
+          t = flight * flight * (3 - 2 * flight);
+        sun
+          .setPosition(
+            start.x + (target.x - start.x) * t,
+            start.y + (224 - start.y) * t - Math.sin(t * Math.PI) * 18,
+          )
+          .setScale((0.12 + charge * 1.18) * (1 + after * 0.7))
+          .setAlpha((0.3 + charge * 0.7) * (1 - after))
+          .clear();
+        sun
+          .fillStyle(color, 0.07)
+          .fillCircle(0, 0, 47)
+          .fillStyle(color, 0.3)
+          .fillCircle(0, 0, 35)
+          .fillStyle(0xffe6a0, 0.65)
+          .fillCircle(0, 0, 25)
+          .fillStyle(0xfffae4, 0.9)
+          .fillCircle(0, 0, 15);
+        for (let i = 0; i < 12; i++) {
+          const a = ms / 800 + (i * Math.PI) / 6,
+            r = 34 + Math.sin(ms / 90 + i) * 2;
+          sun
+            .lineStyle(1.5, color, 0.8)
+            .lineBetween(
+              Math.cos(a) * r,
+              Math.sin(a) * r,
+              Math.cos(a) * (r + 9),
+              Math.sin(a) * (r + 9),
+            );
+        }
+        for (let i = 0; i < 3; i++)
+          sun
+            .lineStyle(1.8, i % 2 ? 0xfff6d2 : color, 0.7)
+            .beginPath()
+            .arc(0, 0, 20 + i * 6, ms / 480 + i * 2.1, ms / 480 + i * 2.1 + 1.4)
+            .strokePath();
+        trail.clear();
+        if (flight > 0 && after === 0) {
+          history.push({ x: sun.x, y: sun.y });
+          if (history.length > 8) history.shift();
+          for (let i = 1; i < history.length; i++)
+            trail
+              .lineStyle(2 + i * 2, color, i / 22)
+              .lineBetween(history[i - 1].x, history[i - 1].y, history[i].x, history[i].y);
+        }
+      },
+      onComplete: () => {
+        sun.destroy();
+        trail.destroy();
+      },
+    });
+    for (const side of [-1, 1])
+      this.vfx.after(380, () => {
+        const rays = this.vfx.art(source.x, source.y - 70, 4).setName("hero-dawn-rays");
+        const duration = p.impactMs + 400 - 380;
+        this.scene.tweens.addCounter({
+          from: 0,
+          to: duration,
+          duration,
+          onUpdate: (tween) => {
+            const ms = Number(tween.getValue()),
+              spread = Math.min(1, ms / 550),
+              fade = 1 - Math.max(0, (ms - (duration - 350)) / 350);
+            rays
+              .setPosition(source.x, source.y - 70)
+              .setScale(side * d * spread, spread)
+              .setAlpha(fade)
+              .clear();
+            for (let i = 0; i < 5; i++) {
+              const a = -1 + i * 0.27 + Math.sin(ms / 320) * 0.035,
+                length = 98 - i * 5;
+              const tip = { x: Math.cos(a) * length, y: Math.sin(a) * length };
+              rays.fillStyle(color, 0.11).fillPoints(
+                [
+                  { x: 0, y: 0 },
+                  { x: tip.x - 12, y: tip.y - 5 },
+                  { x: tip.x + 11, y: tip.y + 4 },
+                  { x: 18, y: 15 },
+                ],
+                true,
+              );
+              rays.lineStyle(1.3, 0xffe3a2, 0.55).lineBetween(10, 2, tip.x, tip.y);
+            }
+          },
+          onComplete: () => rays.destroy(),
+        });
+      });
   }
 
   private art(x: number, y: number, kind: string) {
@@ -481,14 +567,28 @@ export class HeroPowerEffects {
 
   private lightning(x: number, y: number, toX: number, toY: number, color: number) {
     const bolt = this.art(x, y, "lightning");
-    const points = Array.from({ length: 11 }, (_, i) => ({
-      x: ((toX - x) * i) / 10 + (i && i < 10 ? (i % 2 ? 8 : -8) : 0),
-      y: ((toY - y) * i) / 10 + (i && i < 10 ? (i % 2 ? 11 : -11) : 0),
-    }));
-    bolt.lineStyle(9, color, 0.12).strokePoints(points, false);
-    bolt.lineStyle(3, color, 0.9).strokePoints(points, false);
-    bolt.lineStyle(1, 0xeaffff).strokePoints(points, false);
-    this.vfx.fade(bolt, 170);
+    this.scene.tweens.addCounter({
+      from: 0,
+      to: 170,
+      duration: 170,
+      onUpdate: (tween) => {
+        const ms = Number(tween.getValue()),
+          pulse = Math.floor(ms / 32);
+        const points = Array.from({ length: 13 }, (_, i) => ({
+          x: ((toX - x) * i) / 12 + (i && i < 12 ? Math.sin(i * 2.1 + pulse * 1.9) * 7 : 0),
+          y: ((toY - y) * i) / 12 + (i && i < 12 ? Math.cos(i * 1.7 + pulse * 2.3) * 10 : 0),
+        }));
+        bolt.clear().setAlpha((1 - ms / 170) * (0.75 + Math.sin(ms / 12) * 0.15));
+        bolt
+          .lineStyle(9, color, 0.12)
+          .strokePoints(points, false)
+          .lineStyle(3, color, 0.9)
+          .strokePoints(points, false)
+          .lineStyle(1, 0xeaffff)
+          .strokePoints(points, false);
+      },
+      onComplete: () => bolt.destroy(),
+    });
   }
 
   private vortex(from: number, to: number, color: number, duration: number) {
@@ -635,7 +735,20 @@ export class HeroPowerEffects {
           dy = end.y - point.y;
         const progress = Math.min(1, ms / grow) ** 3;
         const fade = Math.max(0, Math.min(1, (ms - grow - 60) / 280));
-        beam.setPosition(point.x, point.y).setRotation(Math.atan2(dy, dx));
+        beam.setPosition(point.x, point.y).setRotation(Math.atan2(dy, dx)).clear();
+        colors.forEach((color, i) =>
+          beam
+            .lineStyle(width * (1 - i / colors.length), color, i === colors.length - 1 ? 0.9 : 0.2)
+            .lineBetween(0, 0, 100, 0),
+        );
+        for (let i = 0; i < 3; i++) {
+          const y = Math.sin(ms / 52 + i * 2.1) * width * 0.2;
+          const points = Array.from({ length: 18 }, (_, j) => ({
+            x: (j * 100) / 17,
+            y: Math.sin(ms / 65 + j * 0.6 + i * 2.1) * width * 0.14 + y,
+          }));
+          beam.lineStyle(1.3, colors[i % colors.length], 0.65).strokePoints(points, false);
+        }
         beam
           .setScale(
             (Math.hypot(dx, dy) / 100) * progress,

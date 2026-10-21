@@ -1,3 +1,4 @@
+import { makePortraitFighter } from "@/game/scenes/PortraitFighter";
 import { fighterSocket } from "@/game/scenes/PortraitFighter";
 import type * as Phaser from "phaser";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
@@ -71,12 +72,26 @@ export class EmberAttacks {
             pose: pose({ x: -16 * growth, y: 4, tilt: -12, arm: 48, rear: -35, step: -12 }),
           },
           {
+            at: hit - 65,
+            ease: "out",
+            pose: pose({
+              x: Math.max(0, distance - 190),
+              y: -7,
+              tilt: 6,
+              arm: 19,
+              rear: -42,
+              reach: 8,
+              step: 25,
+              cape: -27,
+            }),
+          },
+          {
             at: hit,
             ease: "in",
             pose: pose({
               x: Math.max(0, distance - 83),
               tilt: 10,
-              arm: -23,
+              arm: -5,
               rear: -40,
               reach: 20,
               step: 18,
@@ -323,6 +338,11 @@ export class EmberAttacks {
         source
           .setPosition(home.x + d * value("x"), home.y + value("y"))
           .setAngle(home.angle + d * value("tilt"));
+        const preparing = ms > 130 && ms < hit - 380;
+        const breath = preparing
+          ? Math.min(1, (ms - 130) / 120) * Math.min(1, (hit - 380 - ms) / 180) * Math.sin(ms / 110)
+          : 0;
+        source.y += breath * 2.5;
         if (shadow) {
           const anchor = source.getWorldTransformMatrix().applyInverse(source.x, home.y + 43);
           const rotation = -d * source.rotation;
@@ -336,7 +356,7 @@ export class EmberAttacks {
         joints[1].angle = rests[1].angle + value("rear");
         joints[2].angle = rests[2].angle - value("step");
         joints[3].angle = rests[3].angle + value("step") * 0.7;
-        joints[4].angle = rests[4].angle + value("cape");
+        joints[4].angle = rests[4].angle + value("cape") + breath * 5;
       },
       onComplete: restore,
     });
@@ -436,18 +456,27 @@ export class EmberAttacks {
       );
       for (let i = 0; i < 4; i++)
         this.vfx.after(40 + i * 60, () => {
-          const ghost = this.art(
+          const ghost = makePortraitFighter(
+            this.scene,
             source.x - d * 17,
-            source.y - 43,
-            "rush-afterimage",
-            size,
-            4,
-          ).setScale(d * size, size);
-          ghost
-            .fillStyle(0xff6c25, 0.15)
-            .fillRoundedRect(-25, -41, 46, 79, 12)
-            .fillCircle(-7, -61, 19);
-          ghost.lineStyle(2, color, 0.35).lineBetween(-20, -29, 30, -6);
+            false,
+            "ember",
+            true,
+            color,
+          )
+            .setPosition(source.x - d * 17, source.y)
+            .setAngle(source.angle)
+            .setScale(source.scaleX, source.scaleY)
+            .setAlpha(0.16)
+            .setDepth(4)
+            .setName("hero-ember-rush-afterimage");
+          for (const child of source.list) {
+            const original = child as Actor,
+              copy = ghost.getByName(child.name) as Actor | null;
+            if (copy && child.name !== "hero-shadow")
+              copy.setPosition(original.x, original.y).setAngle(original.angle);
+          }
+          (ghost.getByName("hero-shadow") as Art).setVisible(false);
           this.vfx.fade(ghost, 150);
         });
     });
@@ -582,7 +611,7 @@ export class EmberAttacks {
             .setPosition(source.x, source.y - 69)
             .setScale(size * spread)
             .setAlpha(t < 0.72 ? 1 : (1 - t) / 0.28);
-          pair[0].angle = -17 * (1 - spread) + Math.sin(t * Math.PI) * 8;
+          pair[0].angle = -17 * (1 - spread) + Math.sin(t * Math.PI * 5) * 12;
           pair[1].angle = 17 * (1 - spread) - Math.sin(t * Math.PI) * 8;
         },
         () => wings.destroy(),

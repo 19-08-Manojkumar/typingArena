@@ -23,6 +23,9 @@ test.beforeAll(async () => {
     "game/data/fighterRigs.generated.ts",
     "game/scenes/HeroPowerEffects.ts",
     "game/scenes/HeroAttackMotion.ts",
+    "game/scenes/HeroCinematics.ts",
+    "game/systems/HeroChoreography.ts",
+    "game/systems/HeroCinematicPresentation.ts",
     "game/scenes/EmberAttacks.ts",
     "game/systems/EmberPresentation.ts",
     "game/data/heroStyles.ts",
@@ -491,4 +494,69 @@ test("portrait artwork and weapon effects remain attached through all forty atta
           await page.screenshot({ path: ".local/attacks/portrait-idle-" + ids[fighter] + ".png" });
         }
       }
+});
+
+test("all twenty heroes' moves have tier growth, multiple moving poses and distinct cinematic effects", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 960, height: 410 });
+  const names = new Set<string>();
+  const reports: { fighter: number; slot: number; poses: number }[] = [];
+  for (let fighter = 4; fighter < 8; fighter++) {
+    let previous = 0;
+    for (let slot = 0; slot < 5; slot++) {
+      const initial = await page.evaluate(
+        ({ fighter, slot }) => window.attackLab.play(fighter, slot),
+        { fighter, slot },
+      );
+      const primary = initial.effects.find(
+        (effect) =>
+          effect.name.startsWith("hero-cinematic-") && effect.name !== "hero-cinematic-weapon-wake",
+      )!;
+      expect(primary).toBeDefined();
+      expect(names.has(primary.name)).toBe(false);
+      names.add(primary.name);
+      expect(Math.abs(primary.scaleX)).toBeGreaterThan(previous * 1.1);
+      previous = Math.abs(primary.scaleX);
+      const poses = new Set<string>();
+      let elapsed = 0;
+      for (const fraction of [0.1, 0.22, 0.36, 0.5, 0.64, 0.77, 0.89, 0.98]) {
+        const time = Math.floor(initial.impactMs * fraction);
+        const frame = await page.evaluate((ms) => window.attackLab.advance(ms), time - elapsed);
+        elapsed = time;
+        const actor = frame.actors[0];
+        poses.add(
+          JSON.stringify(
+            [
+              actor.x,
+              actor.y,
+              actor.angle,
+              ...actor.joints.flatMap((joint) => [joint.x, joint.y, joint.angle]),
+            ].map((value) => Number(value.toFixed(1))),
+          ),
+        );
+        expect(frame.damageLabels).toBe(0);
+        expect(frame.effects.find((effect) => effect.name === primary.name)).toBeDefined();
+        if (fraction === 0.77)
+          await page.screenshot({
+            path: ".local/attacks/upgraded-hero-" + fighter + "-tier-" + (slot + 1) + ".png",
+          });
+      }
+      reports.push({ fighter, slot, poses: poses.size });
+      expect(poses.size, "fighter " + fighter + " attack " + (slot + 1)).toBeGreaterThanOrEqual(6);
+      const contact = await page.evaluate(
+        (ms) => window.attackLab.advance(ms),
+        initial.impactMs + 32 - elapsed,
+      );
+      expect(contact.damageLabels).toBe(1);
+      const done = await page.evaluate((ms) => window.attackLab.advance(ms), initial.durationMs);
+      expect(done.actors).toEqual(initial.actors);
+      expect(done.objects).toBe(3);
+      expect(done.tweens).toBe(0);
+    }
+  }
+  expect(names.size).toBe(20);
+  test
+    .info()
+    .annotations.push({ type: "hero-motion-progression", description: JSON.stringify(reports) });
 });
