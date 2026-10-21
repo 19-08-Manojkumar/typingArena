@@ -1,7 +1,10 @@
 import * as Phaser from "phaser";
+import { isPortraitFighter, makePortraitFighter } from "@/game/scenes/PortraitFighter";
 import { BoxerRig } from "@/game/scenes/BoxerRig";
+import { isHeroId } from "@/game/data/heroStyles";
+import { makeHero } from "@/game/scenes/HeroFighterArt";
 
-/** Original procedural silhouettes; also reused by clones and shadow summons. */
+/** Shared portrait rigs; the boxing mode retains its existing dedicated rig. */
 export function makeFighter(
   scene: Phaser.Scene,
   x: number,
@@ -11,6 +14,9 @@ export function makeFighter(
   shadow = false,
 ) {
   if (archetype === "boxer") return new BoxerRig(scene, x, color, flip);
+  if (isHeroId(archetype) && !shadow) return makeHero(scene, x, color, flip, archetype);
+  if (isPortraitFighter(archetype))
+    return makePortraitFighter(scene, x, flip, archetype, shadow, color);
   const fighter = scene.add.container(x, 278);
   const g = scene.add.graphics();
   const boxing = archetype === "boxer" || archetype === "brawler";

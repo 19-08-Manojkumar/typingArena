@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import type { GameSession } from "@/game/systems/GameSession";
 import type { CombatEffect } from "@/game/systems/CombatSystem";
 import { makeFighter } from "@/game/scenes/FighterArt";
+import { preloadFighterArt, updateFighterShadow } from "@/game/scenes/PortraitFighter";
 import { AttackAnimator } from "@/game/scenes/AttackAnimator";
 
 export interface FightView {
@@ -32,6 +33,9 @@ export abstract class FightScene extends Phaser.Scene {
     super(key);
   }
   abstract view(): FightView;
+  preload() {
+    if (!this.boxing) preloadFighterArt(this);
+  }
   create() {
     this.cameras.main.setBackgroundColor(this.boxing ? 0x1c1829 : 0x15192d);
     const background = this.add.graphics();
@@ -101,6 +105,10 @@ export abstract class FightScene extends Phaser.Scene {
       .setDepth(12);
   }
   update(_time: number, delta: number) {
+    if (!this.boxing) {
+      updateFighterShadow(this.player);
+      updateFighterShadow(this.enemy);
+    }
     this.session.step(delta);
     const state = this.view();
     const status = this.session.engine.snapshot().status;

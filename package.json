@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "art:fighters": "node scripts/build-fighter-art.mjs",
+    "prebuild": "npm run art:fighters"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",

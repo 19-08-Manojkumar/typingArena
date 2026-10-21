@@ -1,0 +1,1073 @@
+{
+  "frames": {
+    "crystal/body": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 198,
+        "h": 309
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 198,
+        "h": 309
+      },
+      "sourceSize": {
+        "w": 198,
+        "h": 309
+      }
+    },
+    "crystal/lead-arm": {
+      "frame": {
+        "x": 204,
+        "y": 2,
+        "w": 132,
+        "h": 297
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 132,
+        "h": 297
+      },
+      "sourceSize": {
+        "w": 132,
+        "h": 297
+      }
+    },
+    "hunter/lead-arm": {
+      "frame": {
+        "x": 340,
+        "y": 2,
+        "w": 210,
+        "h": 295
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 210,
+        "h": 295
+      },
+      "sourceSize": {
+        "w": 210,
+        "h": 295
+      }
+    },
+    "ninja/body": {
+      "frame": {
+        "x": 554,
+        "y": 2,
+        "w": 156,
+        "h": 276
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 156,
+        "h": 276
+      },
+      "sourceSize": {
+        "w": 156,
+        "h": 276
+      }
+    },
+    "hunter/body": {
+      "frame": {
+        "x": 714,
+        "y": 2,
+        "w": 124,
+        "h": 274
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 124,
+        "h": 274
+      },
+      "sourceSize": {
+        "w": 124,
+        "h": 274
+      }
+    },
+    "swordsman/body": {
+      "frame": {
+        "x": 842,
+        "y": 2,
+        "w": 135,
+        "h": 265
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 135,
+        "h": 265
+      },
+      "sourceSize": {
+        "w": 135,
+        "h": 265
+      }
+    },
+    "brawler/body": {
+      "frame": {
+        "x": 981,
+        "y": 2,
+        "w": 188,
+        "h": 264
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 188,
+        "h": 264
+      },
+      "sourceSize": {
+        "w": 188,
+        "h": 264
+      }
+    },
+    "brawler/cape": {
+      "frame": {
+        "x": 1173,
+        "y": 2,
+        "w": 180,
+        "h": 259
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 180,
+        "h": 259
+      },
+      "sourceSize": {
+        "w": 180,
+        "h": 259
+      }
+    },
+    "storm/body": {
+      "frame": {
+        "x": 1357,
+        "y": 2,
+        "w": 153,
+        "h": 255
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 153,
+        "h": 255
+      },
+      "sourceSize": {
+        "w": 153,
+        "h": 255
+      }
+    },
+    "ember/body": {
+      "frame": {
+        "x": 1514,
+        "y": 2,
+        "w": 169,
+        "h": 249
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 169,
+        "h": 249
+      },
+      "sourceSize": {
+        "w": 169,
+        "h": 249
+      }
+    },
+    "solar/body": {
+      "frame": {
+        "x": 1687,
+        "y": 2,
+        "w": 152,
+        "h": 244
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 152,
+        "h": 244
+      },
+      "sourceSize": {
+        "w": 152,
+        "h": 244
+      }
+    },
+    "swordsman/lead-arm": {
+      "frame": {
+        "x": 1843,
+        "y": 2,
+        "w": 174,
+        "h": 241
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 174,
+        "h": 241
+      },
+      "sourceSize": {
+        "w": 174,
+        "h": 241
+      }
+    },
+    "hunter/cape": {
+      "frame": {
+        "x": 2,
+        "y": 315,
+        "w": 294,
+        "h": 241
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 294,
+        "h": 241
+      },
+      "sourceSize": {
+        "w": 294,
+        "h": 241
+      }
+    },
+    "swordsman/cape": {
+      "frame": {
+        "x": 300,
+        "y": 315,
+        "w": 223,
+        "h": 236
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 223,
+        "h": 236
+      },
+      "sourceSize": {
+        "w": 223,
+        "h": 236
+      }
+    },
+    "solar/cape": {
+      "frame": {
+        "x": 527,
+        "y": 315,
+        "w": 206,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 206,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 206,
+        "h": 220
+      }
+    },
+    "crystal/cape": {
+      "frame": {
+        "x": 737,
+        "y": 315,
+        "w": 206,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 206,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 206,
+        "h": 220
+      }
+    },
+    "ember/cape": {
+      "frame": {
+        "x": 947,
+        "y": 315,
+        "w": 206,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 206,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 206,
+        "h": 220
+      }
+    },
+    "solar/lead-arm": {
+      "frame": {
+        "x": 1157,
+        "y": 315,
+        "w": 134,
+        "h": 211
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 134,
+        "h": 211
+      },
+      "sourceSize": {
+        "w": 134,
+        "h": 211
+      }
+    },
+    "storm/lead-arm": {
+      "frame": {
+        "x": 1295,
+        "y": 315,
+        "w": 172,
+        "h": 208
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 172,
+        "h": 208
+      },
+      "sourceSize": {
+        "w": 172,
+        "h": 208
+      }
+    },
+    "storm/cape": {
+      "frame": {
+        "x": 1471,
+        "y": 315,
+        "w": 167,
+        "h": 175
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 167,
+        "h": 175
+      },
+      "sourceSize": {
+        "w": 167,
+        "h": 175
+      }
+    },
+    "solar/rear-arm": {
+      "frame": {
+        "x": 1642,
+        "y": 315,
+        "w": 111,
+        "h": 158
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 111,
+        "h": 158
+      },
+      "sourceSize": {
+        "w": 111,
+        "h": 158
+      }
+    },
+    "ninja/rear-arm": {
+      "frame": {
+        "x": 1757,
+        "y": 315,
+        "w": 148,
+        "h": 156
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 148,
+        "h": 156
+      },
+      "sourceSize": {
+        "w": 148,
+        "h": 156
+      }
+    },
+    "ember/lead-arm": {
+      "frame": {
+        "x": 2,
+        "y": 560,
+        "w": 150,
+        "h": 153
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 150,
+        "h": 153
+      },
+      "sourceSize": {
+        "w": 150,
+        "h": 153
+      }
+    },
+    "ember/rear-arm": {
+      "frame": {
+        "x": 156,
+        "y": 560,
+        "w": 105,
+        "h": 146
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 146
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 146
+      }
+    },
+    "ninja/lead-leg": {
+      "frame": {
+        "x": 265,
+        "y": 560,
+        "w": 103,
+        "h": 140
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 103,
+        "h": 140
+      },
+      "sourceSize": {
+        "w": 103,
+        "h": 140
+      }
+    },
+    "ninja/rear-leg": {
+      "frame": {
+        "x": 372,
+        "y": 560,
+        "w": 136,
+        "h": 137
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 136,
+        "h": 137
+      },
+      "sourceSize": {
+        "w": 136,
+        "h": 137
+      }
+    },
+    "brawler/rear-leg": {
+      "frame": {
+        "x": 512,
+        "y": 560,
+        "w": 125,
+        "h": 136
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 125,
+        "h": 136
+      },
+      "sourceSize": {
+        "w": 125,
+        "h": 136
+      }
+    },
+    "brawler/lead-leg": {
+      "frame": {
+        "x": 641,
+        "y": 560,
+        "w": 132,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 132,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 132,
+        "h": 135
+      }
+    },
+    "brawler/lead-arm": {
+      "frame": {
+        "x": 777,
+        "y": 560,
+        "w": 155,
+        "h": 132
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 155,
+        "h": 132
+      },
+      "sourceSize": {
+        "w": 155,
+        "h": 132
+      }
+    },
+    "storm/rear-arm": {
+      "frame": {
+        "x": 936,
+        "y": 560,
+        "w": 92,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 131
+      }
+    },
+    "crystal/rear-arm": {
+      "frame": {
+        "x": 1032,
+        "y": 560,
+        "w": 92,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 131
+      }
+    },
+    "swordsman/lead-leg": {
+      "frame": {
+        "x": 1128,
+        "y": 560,
+        "w": 101,
+        "h": 130
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 101,
+        "h": 130
+      },
+      "sourceSize": {
+        "w": 101,
+        "h": 130
+      }
+    },
+    "swordsman/rear-leg": {
+      "frame": {
+        "x": 1233,
+        "y": 560,
+        "w": 112,
+        "h": 129
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 112,
+        "h": 129
+      },
+      "sourceSize": {
+        "w": 112,
+        "h": 129
+      }
+    },
+    "solar/rear-leg": {
+      "frame": {
+        "x": 1349,
+        "y": 560,
+        "w": 107,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 107,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 107,
+        "h": 128
+      }
+    },
+    "storm/rear-leg": {
+      "frame": {
+        "x": 1460,
+        "y": 560,
+        "w": 107,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 107,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 107,
+        "h": 128
+      }
+    },
+    "crystal/rear-leg": {
+      "frame": {
+        "x": 1571,
+        "y": 560,
+        "w": 107,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 107,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 107,
+        "h": 128
+      }
+    },
+    "ember/rear-leg": {
+      "frame": {
+        "x": 1682,
+        "y": 560,
+        "w": 107,
+        "h": 128
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 107,
+        "h": 128
+      },
+      "sourceSize": {
+        "w": 107,
+        "h": 128
+      }
+    },
+    "hunter/rear-arm": {
+      "frame": {
+        "x": 1793,
+        "y": 560,
+        "w": 146,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 146,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 146,
+        "h": 127
+      }
+    },
+    "solar/lead-leg": {
+      "frame": {
+        "x": 2,
+        "y": 717,
+        "w": 105,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 127
+      }
+    },
+    "storm/lead-leg": {
+      "frame": {
+        "x": 111,
+        "y": 717,
+        "w": 105,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 127
+      }
+    },
+    "crystal/lead-leg": {
+      "frame": {
+        "x": 220,
+        "y": 717,
+        "w": 105,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 127
+      }
+    },
+    "ember/lead-leg": {
+      "frame": {
+        "x": 329,
+        "y": 717,
+        "w": 105,
+        "h": 127
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 127
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 127
+      }
+    },
+    "ninja/cape": {
+      "frame": {
+        "x": 438,
+        "y": 717,
+        "w": 182,
+        "h": 125
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 182,
+        "h": 125
+      },
+      "sourceSize": {
+        "w": 182,
+        "h": 125
+      }
+    },
+    "swordsman/rear-arm": {
+      "frame": {
+        "x": 624,
+        "y": 717,
+        "w": 105,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 105,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 105,
+        "h": 124
+      }
+    },
+    "brawler/rear-arm": {
+      "frame": {
+        "x": 733,
+        "y": 717,
+        "w": 141,
+        "h": 118
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 141,
+        "h": 118
+      },
+      "sourceSize": {
+        "w": 141,
+        "h": 118
+      }
+    },
+    "ninja/lead-arm": {
+      "frame": {
+        "x": 878,
+        "y": 717,
+        "w": 138,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 138,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 138,
+        "h": 112
+      }
+    },
+    "solar/foreground": {
+      "frame": {
+        "x": 1020,
+        "y": 717,
+        "w": 99,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 36
+      }
+    },
+    "storm/foreground": {
+      "frame": {
+        "x": 1123,
+        "y": 717,
+        "w": 99,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 36
+      }
+    },
+    "crystal/foreground": {
+      "frame": {
+        "x": 1226,
+        "y": 717,
+        "w": 99,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 36
+      }
+    },
+    "ember/foreground": {
+      "frame": {
+        "x": 1329,
+        "y": 717,
+        "w": 99,
+        "h": 36
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 99,
+        "h": 36
+      },
+      "sourceSize": {
+        "w": 99,
+        "h": 36
+      }
+    },
+    "brawler/foreground": {
+      "frame": {
+        "x": 1432,
+        "y": 717,
+        "w": 145,
+        "h": 35
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 145,
+        "h": 35
+      },
+      "sourceSize": {
+        "w": 145,
+        "h": 35
+      }
+    },
+    "ninja/foreground": {
+      "frame": {
+        "x": 1581,
+        "y": 717,
+        "w": 100,
+        "h": 27
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 100,
+        "h": 27
+      },
+      "sourceSize": {
+        "w": 100,
+        "h": 27
+      }
+    },
+    "swordsman/foreground": {
+      "frame": {
+        "x": 1685,
+        "y": 717,
+        "w": 138,
+        "h": 25
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 138,
+        "h": 25
+      },
+      "sourceSize": {
+        "w": 138,
+        "h": 25
+      }
+    }
+  },
+  "meta": {
+    "image": "fighters.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 2048,
+      "h": 864
+    },
+    "scale": "1"
+  }
+}

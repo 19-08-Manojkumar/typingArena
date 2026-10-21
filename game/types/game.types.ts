@@ -1,6 +1,7 @@
 export type Mode = "racing" | "battle" | "combat";
 export type Difficulty = "easy" | "normal" | "hard";
 export type PassageLength = "short" | "medium" | "long";
+export type Faction = "hero" | "villain";
 export type CharacterState = "correct" | "incorrect" | "pending";
 export type TypingStatus = "idle" | "countdown" | "running" | "paused" | "complete";
 export interface TypingStats {
@@ -42,6 +43,8 @@ export interface Ability {
 }
 export interface Fighter {
   id: string;
+  faction: Faction;
+  style: string;
   name: string;
   title: string;
   description: string;

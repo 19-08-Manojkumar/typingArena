@@ -1661,6 +1661,20 @@ input[type="range"] {
   cursor: text;
   scrollbar-width: thin;
   scrollbar-color: #344765 transparent;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+}
+.passage::before {
+  content: "";
+  position: absolute;
+  top: var(--typing-line-top, 0px);
+  left: 0;
+  right: 0;
+  height: var(--typing-line-height, 0px);
+  border-radius: 3px;
+  background: #7f9fea0d;
+  box-shadow: inset 2px 0 #8ba6d650;
+  pointer-events: none;
 }
 .passage .pending {
   color: #697c9a;

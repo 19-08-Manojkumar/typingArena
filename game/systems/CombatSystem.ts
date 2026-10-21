@@ -25,6 +25,7 @@ export class CombatSystem {
   finished = false;
   won = false;
   pendingAttack: {
+    source: "player" | "opponent";
     damage: number;
     elapsed: number;
     impacted: boolean;
@@ -33,6 +34,7 @@ export class CombatSystem {
   effect: CombatEffect = { serial: 0, source: "player", damage: 0, effect: "slash", name: "" };
   private resolved = new Set<string>();
   private cooldowns = new Map<string, number>();
+  private opponentTurn = 0;
   readonly attackInterval: number;
   constructor(
     readonly player: Fighter,
@@ -80,7 +82,7 @@ export class CombatSystem {
       stats.wpm,
       this.level,
     );
-    this.pendingAttack = { damage, elapsed: 0, impacted: false, presentation };
+    this.pendingAttack = { source: "player", damage, elapsed: 0, impacted: false, presentation };
     this.effect = {
       serial: this.effect.serial + 1,
       source: "player",
@@ -93,7 +95,7 @@ export class CombatSystem {
     return damage;
   }
   update(dt: number) {
-    if (this.finished) return;
+    if (this.finished || !Number.isFinite(dt) || dt <= 0) return;
     this.elapsed += dt;
     this.charge(dt * 0.75);
     if (this.pendingAttack) {
@@ -101,8 +103,10 @@ export class CombatSystem {
       attack.elapsed += dt * 1000;
       if (!attack.impacted && attack.elapsed >= attack.presentation.impactMs) {
         attack.impacted = true;
-        this.enemyHealth = clamp(this.enemyHealth - attack.damage, 0, this.enemyMaxHealth);
-        this.damageDealt += attack.damage;
+        if (attack.source === "player") {
+          this.enemyHealth = clamp(this.enemyHealth - attack.damage, 0, this.enemyMaxHealth);
+          this.damageDealt += attack.damage;
+        } else this.health = clamp(this.health - attack.damage, 0, this.player.health);
         this.checkFinish();
       }
       if (attack.elapsed >= attack.presentation.durationMs) this.pendingAttack = null;
@@ -110,17 +114,26 @@ export class CombatSystem {
     }
     this.nextAttack -= dt;
     if (this.nextAttack <= 0) {
+      const slot = [0, 1, 0, 2, 0, 3, 0, 4][this.opponentTurn++ % 8];
+      const ability = this.opponent.abilities[slot];
       const damage = Math.round(
-        { easy: 9, normal: 12, hard: 16 }[this.difficulty] * this.opponent.power,
+        { easy: 9, normal: 12, hard: 16 }[this.difficulty] * this.opponent.power * (1 + slot * 0.2),
       );
-      this.health = clamp(this.health - damage, 0, this.player.health);
+      const presentation = attackPresentation(ability, this.opponent.id, 85, 40);
+      this.pendingAttack = {
+        source: "opponent",
+        damage,
+        elapsed: 0,
+        impacted: false,
+        presentation,
+      };
       this.effect = {
         serial: this.effect.serial + 1,
         source: "opponent",
         damage,
-        effect: this.opponent.abilities[0].effect,
-        name: "Counterattack",
-        presentation: attackPresentation(this.opponent.abilities[0], this.opponent.id, 85, 40),
+        effect: ability.effect,
+        name: ability.name,
+        presentation,
       };
       this.nextAttack += this.attackInterval;
     }

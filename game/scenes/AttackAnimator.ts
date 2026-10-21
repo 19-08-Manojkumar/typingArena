@@ -4,6 +4,8 @@ import type { AttackPresentation } from "@/game/systems/AttackPresentation";
 import { AttackVfx } from "@/game/scenes/AttackVfx";
 import { PowerEffects } from "@/game/scenes/PowerEffects";
 import { BoxingAnimator } from "@/game/scenes/BoxingAnimator";
+import { isHeroId } from "@/game/data/heroStyles";
+import { heroImpact } from "@/game/scenes/HeroAttackMotion";
 
 type Actor = Phaser.GameObjects.Container;
 
@@ -39,14 +41,19 @@ export class AttackAnimator {
     const ultimate = plan.tier === "ultimate" || plan.tier === "finisher";
     if (plan.tier !== "basic") {
       const title = this.scene.add
-        .text(480, 108, `${plan.rating} · ${effect.name.toUpperCase()}`, {
-          fontFamily: "Arial",
-          fontSize: ultimate ? "21px" : "16px",
-          fontStyle: "bold",
-          color: `#${color.toString(16).padStart(6, "0")}`,
-          stroke: "#080e21",
-          strokeThickness: 4,
-        })
+        .text(
+          480,
+          plan.fighterId === "ember" ? 48 : isHeroId(plan.fighterId) ? 78 : 108,
+          `${plan.rating} · ${effect.name.toUpperCase()}`,
+          {
+            fontFamily: "Arial",
+            fontSize: ultimate ? "21px" : "16px",
+            fontStyle: "bold",
+            color: `#${color.toString(16).padStart(6, "0")}`,
+            stroke: "#080e21",
+            strokeThickness: 4,
+          },
+        )
         .setOrigin(0.5)
         .setDepth(20)
         .setAlpha(0);
@@ -91,22 +98,28 @@ export class AttackAnimator {
     vfx: AttackVfx,
   ) {
     if (!this.reducedMotion) {
-      vfx.burst(target.x, 226, color, Math.min(2.8, plan.intensity));
-      const rest = { angle: target.angle, y: target.y };
-      const direction = source.x < target.x ? 1 : -1;
-      this.scene.tweens.add({
-        targets: target,
-        angle: rest.angle + direction * Math.min(13, 4 + plan.intensity * 3),
-        y: rest.y - Math.min(7, plan.intensity * 2),
-        duration: 85,
-        ease: "Sine.easeOut",
-        yoyo: true,
-      });
-      this.scene.tweens.add({ targets: target, alpha: 0.5, duration: 65, yoyo: true });
-      this.scene.cameras.main.shake(
-        plan.tier === "finisher" ? 180 : 75,
-        Math.min(0.0045, plan.intensity * 0.0015),
-      );
+      if (isHeroId(plan.fighterId)) {
+        if (plan.tier !== "basic" && plan.fighterId !== "ember")
+          vfx.burst(target.x, 226, color, Math.min(2.8, plan.intensity));
+        heroImpact(this.scene, source, target, color, plan);
+      } else {
+        vfx.burst(target.x, 226, color, Math.min(2.8, plan.intensity));
+        const rest = { angle: target.angle, y: target.y };
+        const direction = source.x < target.x ? 1 : -1;
+        this.scene.tweens.add({
+          targets: target,
+          angle: rest.angle + direction * Math.min(13, 4 + plan.intensity * 3),
+          y: rest.y - Math.min(7, plan.intensity * 2),
+          duration: 85,
+          ease: "Sine.easeOut",
+          yoyo: true,
+        });
+        this.scene.tweens.add({ targets: target, alpha: 0.5, duration: 65, yoyo: true });
+        this.scene.cameras.main.shake(
+          plan.tier === "finisher" ? 180 : 75,
+          Math.min(0.0045, plan.intensity * 0.0015),
+        );
+      }
     } else {
       const cue = vfx.art(target.x, 226, 9);
       cue.lineStyle(2, color, 0.8).strokeCircle(0, 0, 30);
@@ -127,7 +140,9 @@ export class AttackAnimator {
       targets: text,
       y: this.reducedMotion ? 150 : 131,
       alpha: 0,
-      duration: 520,
+      duration: isHeroId(plan.fighterId)
+        ? Math.min(520, plan.durationMs - plan.impactMs - 40)
+        : 520,
       onComplete: () => text.destroy(),
     });
   }

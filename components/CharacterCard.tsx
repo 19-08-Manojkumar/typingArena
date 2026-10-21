@@ -16,7 +16,9 @@ export function CharacterCard({
 }) {
   return (
     <button
-      className={`selection-card fighter-card ${selected ? "selected" : ""}`}
+      className={`selection-card fighter-card ${fighter.faction} ${selected ? "selected" : ""}`}
+      data-faction={fighter.faction}
+      data-fighter={fighter.id}
       onClick={onSelect}
       disabled={locked}
       aria-pressed={selected}
@@ -40,6 +42,9 @@ export function CharacterCard({
       </div>
       <div className="selection-copy">
         <h3>{fighter.name}</h3>
+        <span className={`fighter-faction ${fighter.faction}`}>
+          {fighter.faction.toUpperCase()} · {fighter.style}
+        </span>
         <p>{fighter.description}</p>
         <div className="fighter-attributes">
           <span>

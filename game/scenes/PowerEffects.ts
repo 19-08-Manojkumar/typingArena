@@ -4,6 +4,8 @@ import { AttackVfx } from "@/game/scenes/AttackVfx";
 import { makeFighter } from "@/game/scenes/FighterArt";
 import { fighterMotion } from "@/game/scenes/FighterMotion";
 import { CelestialTempest } from "@/game/scenes/CelestialTempest";
+import { isHeroId } from "@/game/data/heroStyles";
+import { HeroPowerEffects } from "@/game/scenes/HeroPowerEffects";
 
 type Actor = Phaser.GameObjects.Container;
 
@@ -15,6 +17,10 @@ export class PowerEffects {
   }
 
   play(source: Actor, target: Actor, color: number, plan: AttackPresentation) {
+    if (isHeroId(plan.fighterId)) {
+      new HeroPowerEffects(this.scene).play(source, target, color, plan);
+      return;
+    }
     const d = source.x < target.x ? 1 : -1;
     switch (plan.fighterId) {
       case "ninja":
@@ -426,10 +432,8 @@ export class PowerEffects {
       .setY(313)
       .setScale(d * 0.9, 0.9)
       .setAlpha(0);
-    const scythe = this.vfx.art(35, -70);
-    scythe.lineStyle(4, 0xe0caff).lineBetween(0, -55, 0, 82);
-    scythe.lineStyle(8, color).beginPath().arc(0, -30, 33, -1.8, 0.8).strokePath();
-    guardian.add(scythe);
+    // Animate the matching portrait weapon instead of drawing a second scythe.
+    const scythe = guardian.getByName("lead-arm") as Actor;
     this.scene.tweens.add({ targets: guardian, y: 280, alpha: 1, duration: 350 });
     this.vfx.after(p.impactMs - 300, () => {
       this.scene.tweens.add({ targets: scythe, angle: 100, duration: 300, ease: "Cubic.easeIn" });

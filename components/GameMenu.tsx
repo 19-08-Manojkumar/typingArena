@@ -223,7 +223,11 @@ export function GameMenu({ modesOnly = false }: { modesOnly?: boolean }) {
                     <span className="status-dot" /> SINGLE PLAYER
                   </span>
                   <span>
-                    {id === "racing" ? "3+ VEHICLES" : id === "battle" ? "4 FIGHTERS" : "3 ROUNDS"}
+                    {id === "racing"
+                      ? "3+ VEHICLES"
+                      : id === "battle"
+                        ? "4 HEROES + 4 VILLAINS"
+                        : "3 ROUNDS"}
                   </span>
                 </div>
               </div>

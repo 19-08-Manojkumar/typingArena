@@ -5,6 +5,7 @@ import "./globals.css";
 import "./gameplay.css";
 import "./racing.css";
 import "./boxing.css";
+import "./battle-roster.css";
 
 const title = "Typing Arena — Find your flow";
 const description =

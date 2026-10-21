@@ -3,6 +3,7 @@ import { CombatSystem } from "@/game/systems/CombatSystem";
 import { ChallengeDeck } from "@/game/data/challenges";
 import type { Ability, Difficulty, Fighter, TypingSnapshot } from "@/game/types/game.types";
 import { calculateAccuracy, calculateWpm } from "@/lib/scoring";
+import type { AttackPerformance } from "@/game/systems/CombatSystem";
 
 export class BattleSession extends GameSession {
   readonly combat: CombatSystem;
@@ -12,6 +13,7 @@ export class BattleSession extends GameSession {
   private awaitingNext = false;
   private deck: ChallengeDeck;
   private baseline: TypingSnapshot;
+  private counter: { id: string; ability: Ability; stats: AttackPerformance } | null = null;
   constructor(
     player: Fighter,
     opponent: Fighter,
@@ -30,14 +32,18 @@ export class BattleSession extends GameSession {
       if (event.kind === "complete") {
         const attempts = event.snapshot.attempts - this.baseline.attempts;
         const incorrect = event.snapshot.incorrect - this.baseline.incorrect;
-        this.combat.resolve(`attack-${this.challenge++}`, this.activeAbility, {
+        const stats = {
           accuracy: calculateAccuracy(attempts - incorrect, attempts),
           wpm: calculateWpm(
             event.snapshot.correct - this.baseline.correct,
             event.snapshot.elapsed - this.baseline.elapsed,
           ),
           combo: event.snapshot.wordCombo,
-        });
+        };
+        const id = `attack-${this.challenge++}`;
+        if (this.combat.pendingAttack?.source === "opponent")
+          this.counter = { id, ability: this.activeAbility, stats };
+        else this.combat.resolve(id, this.activeAbility, stats);
         this.baseline = event.snapshot;
         this.awaitingNext = true;
       }
@@ -57,6 +63,11 @@ export class BattleSession extends GameSession {
   }
   simulate(seconds: number) {
     this.combat.update(seconds);
+    if (!this.combat.finished && !this.combat.pendingAttack && this.counter) {
+      const counter = this.counter;
+      this.counter = null;
+      this.combat.resolve(counter.id, counter.ability, counter.stats);
+    }
     if (this.combat.finished) this.finish(this.combat.won, { damage: this.combat.damageDealt });
     else if (this.awaitingNext && !this.combat.pendingAttack) {
       this.awaitingNext = false;

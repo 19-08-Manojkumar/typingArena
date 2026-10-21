@@ -1,3 +1,4 @@
+import { makePortraitFighter } from "@/game/scenes/PortraitFighter";
 import type * as Phaser from "phaser";
 import type { AttackPresentation } from "@/game/systems/AttackPresentation";
 
@@ -137,29 +138,14 @@ export class CelestialTempest {
       .setDepth(6)
       .setScale(direction * size, size)
       .setAlpha(0);
-    const scarf = this.art(-8, -77, 0);
-    scarf.fillStyle(color, 0.8).fillTriangle(0, 0, -30, 14, 0, 8);
-    const body = this.art(0, 0, 0);
-    // Compact ninja art, anchored at the feet. Rise by translation, never by squeezing Y.
-    body.lineStyle(10, 0x10172f).lineBetween(-7, -28, -16, -2);
-    body.lineBetween(7, -28, 19, -2);
-    body.lineStyle(2, color, 0.9).lineBetween(-10, -22, -17, -2);
-    body.lineBetween(10, -22, 20, -2);
-    body.fillStyle(0x151d3c).fillRoundedRect(-15, -66, 30, 42, 7);
-    body.lineStyle(1.5, color, 0.9).strokeRoundedRect(-15, -66, 30, 42, 7);
-    body.fillStyle(color, 0.9).fillRect(-15, -35, 30, 5);
-    body.fillStyle(0x10172f).fillCircle(0, -82, 15);
-    body.lineStyle(1.5, color, 0.9).strokeCircle(0, -82, 15);
-    body.fillStyle(color).fillRect(-14, -88, 28, 4);
-    body.fillStyle(0xe8faff).fillRect(3, -81, 8, 2);
-    body.lineStyle(8, 0x151d3c).lineBetween(-12, -58, -23, -40);
-    body.lineStyle(2, color).lineBetween(-14, -56, -24, -40);
-    const sword = this.art(12, -59, 0);
-    sword.lineStyle(8, 0x151d3c).lineBetween(0, 0, 13, 10);
-    sword.lineStyle(2, color).lineBetween(0, -2, 14, 8);
-    sword.lineStyle(3, 0xe4f8ff).lineBetween(14, 8, 22, -26);
-    sword.lineStyle(3, color).lineBetween(8, 0, 22, 4);
-    shade.add([scarf, body, sword]);
+    // Retain the summon formation and timing, using the same masked ninja as the card.
+    const fighter = makePortraitFighter(this.scene, 0, false, "ninja", true, color)
+      .setPosition(0, -21.5)
+      .setScale(0.5);
+    (fighter.getByName("hero-shadow") as Phaser.GameObjects.Graphics).setVisible(false);
+    const scarf = fighter.getByName("hero-cape") as Phaser.GameObjects.Container;
+    const sword = fighter.getByName("lead-arm") as Phaser.GameObjects.Container;
+    shade.add(fighter);
     return { shade, sword, scarf };
   }
 

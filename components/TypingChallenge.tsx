@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Crosshair, Keyboard } from "lucide-react";
 import type { GameSession } from "@/game/systems/GameSession";
 import type { TypingSnapshot } from "@/game/types/game.types";
@@ -18,17 +18,56 @@ export function TypingChallenge({
   label?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const passage = useRef<HTMLDivElement>(null);
   const current = useRef<HTMLSpanElement>(null);
   const [focused, setFocused] = useState(false);
   useEffect(() => {
     if (snapshot.status === "running") input.current?.focus({ preventScroll: true });
   }, [snapshot.status, snapshot.passage]);
+  const followCurrentLine = useCallback(() => {
+    const viewport = passage.current;
+    // Completion has no next character; leave the final line visible until the next passage.
+    const cursor = current.current ?? viewport?.querySelector<HTMLSpanElement>("span:last-child");
+    if (!viewport || !cursor || !viewport.clientHeight) return;
+    const bounds = viewport.getBoundingClientRect();
+    const character = cursor.getBoundingClientRect();
+    const lineHeight = parseFloat(getComputedStyle(viewport).lineHeight) || character.height;
+    if (!lineHeight) return;
+    const contentTop = character.top - bounds.top - viewport.clientTop + viewport.scrollTop;
+    const lineTop = Math.max(
+      0,
+      Math.floor((contentTop + character.height / 2) / lineHeight) * lineHeight,
+    );
+    const maxScroll = Math.max(0, viewport.scrollHeight - viewport.clientHeight);
+    const target = Math.max(
+      0,
+      Math.min(maxScroll, lineTop - (viewport.clientHeight - lineHeight) / 2),
+    );
+    // Update before paint, and scroll only this panel. Fast typing never waits for a scroll animation.
+    viewport.style.setProperty("--typing-line-top", `${lineTop}px`);
+    viewport.style.setProperty("--typing-line-height", `${lineHeight}px`);
+    if (Math.abs(viewport.scrollTop - target) > 0.5)
+      viewport.scrollTo({ top: target, behavior: "instant" });
+  }, []);
+  useLayoutEffect(() => {
+    followCurrentLine();
+  }, [snapshot.position, snapshot.passage, snapshot.status, focused, followCurrentLine]);
   useEffect(() => {
-    const node = current.current;
-    if (node && node.offsetTop > 60)
-      node.parentElement?.scrollTo({ top: node.offsetTop - 35, behavior: "instant" });
-    else node?.parentElement?.scrollTo({ top: 0 });
-  }, [snapshot.position]);
+    const viewport = passage.current;
+    if (!viewport) return;
+    const observer = new ResizeObserver(followCurrentLine);
+    observer.observe(viewport);
+    let disposed = false;
+    void document.fonts.ready.then(() => {
+      if (!disposed) followCurrentLine();
+    });
+    document.fonts.addEventListener("loadingdone", followCurrentLine);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      document.fonts.removeEventListener("loadingdone", followCurrentLine);
+    };
+  }, [followCurrentLine]);
   const sendKey = (key: string) => {
     if (key.length === 1) onSound?.(key === snapshot.passage[snapshot.position]);
     session.key(key);
@@ -45,9 +84,13 @@ export function TypingChallenge({
         </span>
       </div>
       <div
+        ref={passage}
         className="passage"
         data-testid="passage"
-        onClick={() => input.current?.focus({ preventScroll: true })}
+        onClick={() => {
+          input.current?.focus({ preventScroll: true });
+          followCurrentLine();
+        }}
         aria-hidden="true"
       >
         {[...snapshot.passage].map((character, index) => (

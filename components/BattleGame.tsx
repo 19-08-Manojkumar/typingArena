@@ -1,9 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
-import { ArrowLeft, Swords } from "lucide-react";
-import { characters } from "@/game/data/characters";
+import { ArrowLeft, Shield, Swords } from "lucide-react";
+import { fightersFor, opponentsFor } from "@/game/data/characters";
 import { BattleSession } from "@/game/systems/BattleSession";
-import type { Difficulty, Fighter } from "@/game/types/game.types";
+import type { Difficulty, Faction, Fighter } from "@/game/types/game.types";
 import { usePlayer } from "@/components/PlayerProvider";
 import { CharacterCard } from "@/components/CharacterCard";
 import { GameStage } from "@/components/GameStage";
@@ -11,12 +11,14 @@ import { Meter } from "@/components/Meter";
 
 export function BattleGame({ collection = false }: { collection?: boolean }) {
   const { profile, ready } = usePlayer();
+  const [faction, setFaction] = useState<Faction>("hero");
   const [fighter, setFighter] = useState<Fighter | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [session, setSession] = useState<BattleSession | null>(null);
   const stepHeading = useRef<HTMLHeadingElement>(null);
   const start = (opponent: Fighter) => {
-    if (!fighter || !ready) return;
+    if (!fighter || !ready || !opponentsFor(fighter).some((rival) => rival.id === opponent.id))
+      return;
     session?.dispose();
     setSession(
       new BattleSession(
@@ -34,9 +36,11 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
         title="Anime Battle"
         onReplay={() => start(session.combat.opponent)}
         label={() =>
-          session.combat.pendingAttack
-            ? `${session.activeAbility.name.toUpperCase()} · ${session.combat.effect.presentation?.rating} CAST`
-            : `TYPE TO CAST: ${session.activeAbility.name.toUpperCase()}`
+          session.combat.pendingAttack?.source === "opponent"
+            ? `INCOMING: ${session.combat.effect.name.toUpperCase()} · FINISH YOUR COUNTER`
+            : session.combat.pendingAttack
+              ? `${session.activeAbility.name.toUpperCase()} · ${session.combat.effect.presentation?.rating} CAST`
+              : `TYPE TO CAST: ${session.activeAbility.name.toUpperCase()}`
         }
         onAction={(key) => {
           const index = ["1", "2", "3", "4", "5"].indexOf(key);
@@ -49,7 +53,9 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
         arenaHud={() => (
           <>
             <div className="arena-player">
-              <span className="fighter-side-label">YOU · LEVEL {profile.level}</span>
+              <span className="fighter-side-label">
+                YOU · {fighter.faction.toUpperCase()} · LEVEL {profile.level}
+              </span>
               <Meter
                 label={fighter.name}
                 value={session.combat.health}
@@ -69,7 +75,8 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
             </div>
             <div className="arena-opponent">
               <span className="fighter-side-label">
-                RIVAL · {session.combat.difficulty.toUpperCase()}
+                {session.combat.opponent.faction.toUpperCase()} ·{" "}
+                {session.combat.difficulty.toUpperCase()}
               </span>
               <Meter
                 label={session.combat.opponent.name}
@@ -78,9 +85,19 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
                 color="red"
               />
               <Meter
-                label="NEXT STRIKE"
-                value={session.combat.attackInterval - session.combat.nextAttack}
-                max={Math.ceil(session.combat.attackInterval)}
+                label={
+                  session.combat.pendingAttack?.source === "opponent" ? "RIVAL CAST" : "NEXT STRIKE"
+                }
+                value={
+                  session.combat.pendingAttack?.source === "opponent"
+                    ? session.combat.pendingAttack.elapsed / 1000
+                    : session.combat.attackInterval - session.combat.nextAttack
+                }
+                max={
+                  session.combat.pendingAttack?.source === "opponent"
+                    ? session.combat.pendingAttack.presentation.durationMs / 1000
+                    : Math.ceil(session.combat.attackInterval)
+                }
                 color="red"
               />
             </div>
@@ -118,11 +135,15 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
               ))}
             </div>
             <p className="hud-hint" role="status">
-              {session.combat.pendingAttack
-                ? `${session.activeAbility.name} unleashed. Watch your attack land.`
-                : session.queuedAbility
-                  ? `${session.queuedAbility.name} is next. Finish this sentence.`
-                  : "Alt + 1–5 or Ctrl + Shift + 1–5 to choose. Finish the sentence to unleash."}
+              {session.combat.pendingAttack?.source === "opponent"
+                ? session.engine.snapshot().status === "complete"
+                  ? `Counter queued. ${session.combat.opponent.name} is casting ${session.combat.effect.name}.`
+                  : `${session.combat.opponent.name} is casting ${session.combat.effect.name}. Finish the sentence to counter.`
+                : session.combat.pendingAttack
+                  ? `${session.activeAbility.name} unleashed. Watch your attack land.`
+                  : session.queuedAbility
+                    ? `${session.queuedAbility.name} is next. Finish this sentence.`
+                    : "Alt + 1–5 or Ctrl + Shift + 1–5 to choose. Finish the sentence to unleash."}
             </p>
           </div>
         )}
@@ -140,15 +161,49 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
           <p>
             {fighter
               ? "Choose your rival to begin. The countdown starts when you click their card."
-              : "Click a fighter to choose them. Every ability has a new typing challenge."}
+              : "Choose your side, pick your fighter, then choose an opponent from the other side."}
           </p>
         </div>
         <Swords className="heading-icon" />
       </div>
+      <section className="battle-allegiance" aria-label="Choose your side">
+        <div className="battle-allegiance-copy">
+          <span className="eyebrow">CHOOSE YOUR SIDE</span>
+          <h2>Who will you fight for?</h2>
+          <p>Four heroes. Four villains. Five powers each.</p>
+        </div>
+        <div className="battle-side-options" role="group" aria-label="Play as hero or villain">
+          {(["hero", "villain"] as const).map((side) => (
+            <button
+              key={side}
+              type="button"
+              data-testid={`play-as-${side}`}
+              className={`battle-side-option ${side}`}
+              aria-pressed={faction === side}
+              onClick={() => {
+                setFaction(side);
+                setFighter(null);
+              }}
+            >
+              {side === "hero" ? <Shield size={23} /> : <Swords size={23} />}
+              <span>
+                <strong>Play as {side === "hero" ? "Hero" : "Villain"}</strong>
+                <small>
+                  {side === "hero"
+                    ? "Light, courage, and elemental power"
+                    : "Shadows, rival blades, and raw power"}
+                </small>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
       <div className="selection-stepbar">
         <div className="selection-steps">
-          <span className={!fighter ? "current" : "done"}>01 YOUR FIGHTER</span>
-          <span className={fighter ? "current" : ""}>02 YOUR RIVAL</span>
+          <span className={!fighter ? "current" : "done"}>01 YOUR {faction.toUpperCase()}</span>
+          <span className={fighter ? "current" : ""}>
+            02 {faction === "hero" ? "VILLAIN" : "HERO"} OPPONENT
+          </span>
         </div>
         <label className="field compact-field">
           OPPONENT DIFFICULTY
@@ -162,9 +217,18 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
           </select>
         </label>
       </div>
+      {fighter && (
+        <div className={`battle-lineup ${faction}`} role="status">
+          <span>YOUR {faction.toUpperCase()}</span>
+          <strong>{fighter.name}</strong>
+          <span className="battle-lineup-style">{fighter.style}</span>
+          <span className="battle-lineup-versus">VS</span>
+          <span>CHOOSE A {faction === "hero" ? "VILLAIN" : "HERO"} BELOW</span>
+        </div>
+      )}
       <div className="section-heading">
         <h2 ref={stepHeading} tabIndex={-1}>
-          {fighter ? `Choose your opponent for ${fighter.name}` : "Choose your fighter"}
+          {fighter ? `Choose your opponent for ${fighter.name}` : `Choose your ${faction}`}
         </h2>
         {fighter && (
           <button className="text-link" onClick={() => setFighter(null)}>
@@ -172,8 +236,12 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
           </button>
         )}
       </div>
-      <div className="selection-grid" key={fighter ? "opponents" : "fighters"}>
-        {characters.map((character) => (
+      <div
+        className="selection-grid"
+        key={`${faction}-${fighter ? "opponents" : "fighters"}`}
+        aria-label={fighter ? "Opponent roster" : "Your fighter roster"}
+      >
+        {(fighter ? opponentsFor(fighter) : fightersFor(faction)).map((character) => (
           <CharacterCard
             key={character.id}
             fighter={character}
@@ -192,8 +260,8 @@ export function BattleGame({ collection = false }: { collection?: boolean }) {
       </div>
       <p className="selection-help">
         {fighter
-          ? "Each rival has a different pace and power. Click a card to enter the arena."
-          : "Precision charges spirit. Specials create unique effects. Ultimate attacks change the battlefield."}
+          ? `Your ${faction} faces a ${faction === "hero" ? "villain" : "hero"}. Click an opponent to enter the arena.`
+          : "All fighters are ready to play. Click a card to choose your fighter, then pick an opponent from the other side."}
       </p>
     </>
   );

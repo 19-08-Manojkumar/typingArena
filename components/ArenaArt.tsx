@@ -1,6 +1,9 @@
 import { useId } from "react";
 import type { Mode } from "@/game/types/game.types";
 import { BoxingArt } from "@/components/BoxingArt";
+import { VillainPortrait, isVillainId } from "@/components/VillainPortrait";
+import { HeroPortrait } from "@/components/HeroPortrait";
+import { isHeroId } from "@/game/data/heroStyles";
 
 /** Original vector artwork; shared visual language for menu and selection screens. */
 export function ArenaArt({
@@ -16,6 +19,10 @@ export function ArenaArt({
 }) {
   const id = useId().replace(/:/g, "");
   if (mode === "combat") return <BoxingArt className={className} />;
+  if (mode === "battle" && isHeroId(variant))
+    return <HeroPortrait hero={variant} color={color} className={className} />;
+  if (mode === "battle" && isVillainId(variant))
+    return <VillainPortrait villain={variant} color={color} className={className} />;
   return (
     <svg className={`arena-art ${className}`} viewBox="0 0 520 300" fill="none" aria-hidden="true">
       <defs>

@@ -21,7 +21,8 @@ describe("five battle powers", () => {
         "ultimate",
         "finisher",
       ]);
-      expect([0, 1, 3].map((slot) => fighter.abilities[slot].id)).toEqual(originals[index]);
+      if (index < originals.length)
+        expect([0, 1, 3].map((slot) => fighter.abilities[slot].id)).toEqual(originals[index]);
       fighter.abilities.forEach((ability, slot) => {
         expect(ability.cost).toBeLessThanOrEqual(fighter.energy);
         if (slot > 0) {

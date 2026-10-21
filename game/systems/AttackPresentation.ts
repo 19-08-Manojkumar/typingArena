@@ -3,6 +3,8 @@ import { clamp } from "@/lib/scoring";
 export interface AttackPresentation {
   abilityId: string;
   fighterId: string;
+  /** Experience level carried to visual effects; combat values and timing are unchanged. */
+  level?: number;
   tier: Ability["tier"];
   quality: number;
   intensity: number;
@@ -25,6 +27,7 @@ export function attackPresentation(
   return {
     abilityId: ability.id,
     fighterId,
+    level: clamp(Math.floor(level), 1, Number.MAX_SAFE_INTEGER),
     tier: ability.tier,
     quality,
     intensity: strength * (0.65 + quality * 0.45 + clamp(level - 1, 0, 10) * 0.012),
