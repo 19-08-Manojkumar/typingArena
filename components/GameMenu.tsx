@@ -16,6 +16,8 @@ import {
 import { ArenaArt } from "@/components/ArenaArt";
 import { usePlayer } from "@/components/PlayerProvider";
 import { xpForLevel } from "@/lib/scoring";
+import { vehicles } from "@/game/data/vehicles";
+import { heroes, villains } from "@/game/data/characters";
 
 const developerHandle = "Manojkumar";
 const developerPortfolio = "https://manojkumar-dev.vercel.app/";
@@ -119,15 +121,36 @@ export function GameMenu({ modesOnly = false }: { modesOnly?: boolean }) {
           <div className="hero-visual">
             <div className="orbit orbit-one" />
             <div className="orbit orbit-two" />
-            <ArenaArt mode="racing" color="#739cff" />
-            <div className="floating-stat">
-              <Zap size={17} />
-              <div>
-                <span>YOUR NEXT LEVEL</span>
-                <strong>Starts with a keystroke.</strong>
+            <div className="hero-art-showcase" aria-hidden="true">
+              <div className="hero-art-combat">
+                <ArenaArt mode="combat" />
               </div>
+              <div className="hero-fighter-collection">
+                {[...heroes, ...villains].map((fighter, index) => (
+                  <ArenaArt
+                    key={fighter.id}
+                    className={`hero-fighter hero-fighter-${index + 1}`}
+                    mode="battle"
+                    color={fighter.color}
+                    variant={fighter.id}
+                  />
+                ))}
+              </div>
+              <div className="hero-car-collection">
+                {vehicles.map((vehicle, index) => (
+                  <ArenaArt
+                    key={vehicle.id}
+                    className={`hero-car hero-car-${index + 1}`}
+                    mode="racing"
+                    color={vehicle.color}
+                    variant={vehicle.id}
+                  />
+                ))}
+              </div>
+              <div className="hero-art-label hero-art-label-racing">RACE</div>
+              <div className="hero-art-label hero-art-label-battle">FIGHT</div>
+              <div className="hero-art-label hero-art-label-combat">BOX</div>
             </div>
-            <span className="hero-coordinate">35° 41′ N / NEON CIRCUIT</span>
           </div>
         </section>
       )}

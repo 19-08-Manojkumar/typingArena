@@ -3,6 +3,7 @@ import type { Mode } from "@/game/types/game.types";
 import { BoxingArt } from "@/components/BoxingArt";
 import { VillainPortrait, isVillainId } from "@/components/VillainPortrait";
 import { HeroPortrait } from "@/components/HeroPortrait";
+import { RaceCarArt } from "@/components/RaceCarArt";
 import { isHeroId } from "@/game/data/heroStyles";
 
 /** Original vector artwork; shared visual language for menu and selection screens. */
@@ -19,6 +20,14 @@ export function ArenaArt({
 }) {
   const id = useId().replace(/:/g, "");
   if (mode === "combat") return <BoxingArt className={className} />;
+  if (mode === "racing")
+    return (
+      <RaceCarArt
+        color={color}
+        model={variant === "ninja" ? "pulse" : variant}
+        className={className}
+      />
+    );
   if (mode === "battle" && isHeroId(variant))
     return <HeroPortrait hero={variant} color={color} className={className} />;
   if (mode === "battle" && isVillainId(variant))
@@ -43,75 +52,130 @@ export function ArenaArt({
         </radialGradient>
       </defs>
       <ellipse cx="290" cy="160" rx="230" ry="150" fill={`url(#${id}-glow)`} />
-      {mode === "racing" ? (
+      {String(mode) === "racing" ? (
         <g>
           <path
-            d="M-60 285 540 42M-80 310 540 68M150 330 580 139M280 330 580 182"
+            d="m-40 250 246-92M5 288l267-101m110-82 180-68M330 300l243-96"
             stroke={color}
-            strokeOpacity=".23"
+            strokeOpacity=".16"
           />
-          <path d="m38 254 115-54m251-75 89-42M10 227l65-30" stroke={color} strokeWidth="3" />
-          <ellipse cx="286" cy="234" rx="162" ry="29" fill="#050916" opacity=".8" />
-          <g transform="translate(50 14) rotate(-12 260 170)">
+          <path
+            d="m42 263 99-37m302-118 78-30M16 228l64-24"
+            stroke={color}
+            strokeWidth="3"
+            strokeOpacity=".5"
+          />
+          <path
+            d="m106 275 123-47m198-104 71-27"
+            stroke="#d5eaff"
+            strokeWidth="2"
+            strokeDasharray="12 16"
+            strokeOpacity=".45"
+          />
+          <ellipse cx="274" cy="229" rx="157" ry="35" fill="#050916" opacity=".75" />
+          <ellipse cx="280" cy="217" rx="124" ry="20" fill={color} opacity=".12" />
+          <g transform="translate(4 0) rotate(-7 260 168)">
+            <ellipse
+              cx="149"
+              cy="198"
+              rx="25"
+              ry="43"
+              fill="#050914"
+              stroke="#34445f"
+              strokeWidth="5"
+            />
+            <ellipse
+              cx="149"
+              cy="198"
+              rx="12"
+              ry="26"
+              fill="#172239"
+              stroke="#8498b7"
+              strokeWidth="3"
+            />
+            <ellipse
+              cx="355"
+              cy="208"
+              rx="25"
+              ry="43"
+              fill="#050914"
+              stroke="#34445f"
+              strokeWidth="5"
+            />
+            <ellipse
+              cx="355"
+              cy="208"
+              rx="12"
+              ry="26"
+              fill="#172239"
+              stroke="#8498b7"
+              strokeWidth="3"
+            />
             <path
-              d="m90 165 56-45 112-17 60 43 70 27 9 45-53 20-226-2-40-32Z"
+              d="m112 174 20-34q7-12 26-17l49-12 24-31q7-9 23-7l61 10q18 3 27 19l23 34 32 20q13 8 15 25l-7 34q-3 13-20 16l-213-5q-25-1-37-15l-20-22Z"
               fill={`url(#${id}-g)`}
               stroke={color}
+              strokeWidth="2.5"
+            />
+            <path
+              d="m207 112 26-31q5-6 15-5l59 10q12 2 19 13l19 29-125-7Z"
+              fill="#0a1124"
+              stroke={color}
+              strokeOpacity=".7"
               strokeWidth="2"
             />
             <path
-              d="m147 125 108-14 48 36-184 20Z"
-              fill="#0a1026"
+              d="m222 109 26-26m15 28 11-31m21 34 12-25"
+              stroke="#b9d9ff"
+              strokeOpacity=".35"
+              strokeWidth="2"
+            />
+            <path d="m133 144 75-29 130 10 42 30-17 26-207-12Z" fill="#1a2942" fillOpacity=".7" />
+            <path d="m145 153 68-27 127 8 37 20-18 18-182-10Z" fill={`url(#${id}-g)`} />
+            <path
+              d="m170 162 185 12-24 22-146-7Z"
+              fill="#111a30"
               stroke={color}
-              strokeOpacity=".6"
+              strokeOpacity=".55"
+              strokeWidth="2"
             />
             <path
-              d="m219 116 16 36m-113 34 182-26 61 18-183 40-93-17"
-              stroke={color}
-              strokeOpacity=".45"
+              d="m223 127 9 29m37-26 6 29m45-25 4 28"
+              stroke="#d7eaff"
+              strokeOpacity=".23"
               strokeWidth="2"
             />
-            <path d="m315 189 66-7-8 18-58 13Z" fill="#080f21" />
-            <path d="m316 188 20-5m28-8 19-4m-283 7 22-4" stroke="#e2f3ff" strokeWidth="6" />
-            <path d="m318 223 59-17" stroke={color} strokeWidth="3" />
-            <ellipse
-              cx="149"
-              cy="223"
-              rx="26"
-              ry="31"
-              fill="#070a12"
-              stroke="#435675"
-              strokeWidth="5"
-            />
-            <ellipse
-              cx="149"
-              cy="223"
-              rx="13"
-              ry="17"
-              fill="#1e2a43"
-              stroke={color}
-              strokeWidth="2"
-            />
-            <ellipse
-              cx="310"
-              cy="233"
-              rx="25"
-              ry="30"
-              fill="#070a12"
-              stroke="#435675"
-              strokeWidth="5"
-            />
-            <ellipse
-              cx="310"
-              cy="233"
-              rx="12"
-              ry="16"
-              fill="#1e2a43"
-              stroke={color}
-              strokeWidth="2"
-            />
-            <path d="m83 180-8-15 26-10 3 12m223-17 54-6 3 10-51 7" fill="#8fbaff" />
-            <path d="m77 220-44 3 36-15" fill={color} opacity=".7" />
+            {variant === "ignition" ? (
+              <path
+                d="m169 171 37 4-20 17-33-3Zm124 9 37 3-20 17-31-3Z"
+                fill="#ffd08b"
+                opacity=".85"
+              />
+            ) : variant === "specter" ? (
+              <path
+                d="m161 171 51 5-25 16-41-3Zm132 11 51 4-24 15-42-3Z"
+                fill="#e8ddff"
+                opacity=".78"
+              />
+            ) : (
+              <>
+                <path
+                  d="m179 167 35 3-17 19-29-2Zm114 9 35 3-17 18-29-2Z"
+                  fill="#e5f7ff"
+                  opacity=".85"
+                />
+                <path
+                  d="m233 131 16 49m24-46 11 48"
+                  stroke={color}
+                  strokeWidth="5"
+                  strokeOpacity=".72"
+                />
+              </>
+            )}
+            <path d="m125 170-14-7-10 10 18 13m267-20 17-7 8 12-18 14" fill="#eaf6ff" />
+            <path d="m133 202 41 2m179 9 29 1" stroke={color} strokeWidth="3" strokeOpacity=".8" />
+            <path d="m179 210 158 5" stroke="#dff3ff" strokeOpacity=".22" strokeWidth="2" />
+            <path d="m91 186-35 8 27-20m294 43 34-11-24 21" fill={color} opacity=".7" />
           </g>
         </g>
       ) : (

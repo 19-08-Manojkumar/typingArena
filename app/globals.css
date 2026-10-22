@@ -425,9 +425,9 @@ button:disabled {
 }
 .hero-visual {
   position: absolute;
-  width: 59%;
+  width: 56%;
   height: 100%;
-  right: -3%;
+  right: 0;
   top: 0;
   display: flex;
   align-items: center;
@@ -436,6 +436,182 @@ button:disabled {
   position: relative;
   z-index: 1;
   transform: scale(1.15);
+}
+.hero-art-showcase {
+  position: absolute;
+  inset: 10px 4px 10px 16px;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 54% 58%, #9b8eff1c, transparent 56%),
+    radial-gradient(ellipse at 52% 105%, #4e91d51c, transparent 58%);
+}
+.hero-art-showcase::before,
+.hero-art-showcase::after {
+  position: absolute;
+  content: "";
+  pointer-events: none;
+}
+.hero-art-showcase::before {
+  inset: 5% 2% 3%;
+  border: 1px solid #a9c8ff20;
+  border-radius: 48% 52% 42% 58% / 52% 44% 56% 48%;
+  box-shadow:
+    inset 0 0 45px #788cf00c,
+    0 0 36px #789aff12;
+}
+.hero-art-showcase::after {
+  right: 7%;
+  bottom: 18%;
+  left: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a9c8ff70, #f7a8bb55, transparent);
+  box-shadow: 0 5px 18px #83bdff55;
+}
+.hero-art-combat {
+  position: absolute;
+  inset: 1% 0 4%;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.34;
+  filter: saturate(0.72);
+}
+.hero-art-combat .arena-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  object-fit: contain;
+}
+.hero-art-label {
+  position: absolute;
+  z-index: 6;
+  border: 1px solid #b7c9ec40;
+  border-radius: 3px;
+  padding: 4px 6px;
+  background: #0d1524b8;
+  color: #d9e7ff;
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+}
+.hero-art-label-racing {
+  top: 7%;
+  left: 4%;
+  color: #a9c8ff;
+}
+.hero-art-label-battle {
+  top: 7%;
+  right: 4%;
+  color: #d0baff;
+}
+.hero-art-label-combat {
+  right: 4%;
+  bottom: 4%;
+  color: #ffb2ba;
+}
+.hero-car-collection {
+  position: absolute;
+  right: 2%;
+  bottom: 3%;
+  left: 2%;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  gap: 0;
+  height: 25%;
+  min-width: 0;
+  min-height: 0;
+}
+.hero-car-collection .arena-art {
+  width: 100%;
+  height: 100%;
+  transform: none;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 5px #020713aa);
+}
+.hero-fighter-collection {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-fighter-collection .arena-art {
+  position: absolute;
+  bottom: 9%;
+  width: 78%;
+  height: auto;
+  max-width: none;
+  overflow: visible;
+  filter: drop-shadow(0 7px 7px #050a18a6);
+  transform-origin: 50% 90%;
+  animation: hero-fighter-idle 3.8s ease-in-out infinite;
+}
+.hero-fighter-1 {
+  left: -19%;
+  z-index: 1;
+  opacity: 0.76;
+  animation-delay: -0.5s !important;
+}
+.hero-fighter-2 {
+  left: -2%;
+  z-index: 2;
+  opacity: 0.82;
+  animation-delay: -1.6s !important;
+}
+.hero-fighter-3 {
+  left: 16%;
+  z-index: 1;
+  opacity: 0.74;
+  animation-delay: -2.4s !important;
+}
+.hero-fighter-4 {
+  left: 35%;
+  z-index: 2;
+  opacity: 0.8;
+  animation-delay: -0.9s !important;
+}
+.hero-fighter-5 {
+  left: -20%;
+  z-index: 3;
+  bottom: 5% !important;
+  width: 87% !important;
+  animation-delay: -2.1s !important;
+}
+.hero-fighter-6 {
+  left: -2%;
+  z-index: 4;
+  bottom: 4% !important;
+  width: 87% !important;
+  animation-delay: -0.8s !important;
+}
+.hero-fighter-7 {
+  left: 17%;
+  z-index: 4;
+  bottom: 5% !important;
+  width: 87% !important;
+  animation-delay: -2.8s !important;
+}
+.hero-fighter-8 {
+  left: 37%;
+  z-index: 3;
+  bottom: 4% !important;
+  width: 87% !important;
+  animation-delay: -1.4s !important;
+}
+@keyframes hero-fighter-idle {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -5px;
+  }
 }
 .orbit {
   position: absolute;
@@ -641,6 +817,15 @@ button:disabled {
 }
 .combat .mode-art {
   background: #261b26;
+}
+.mode-card.racing .mode-art {
+  background:
+    radial-gradient(
+      ellipse at 58% 64%,
+      color-mix(in srgb, var(--mode-color) 20%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(145deg, #111d30, #101624 76%);
 }
 .mode-art .arena-art {
   position: absolute;
@@ -951,7 +1136,7 @@ input[type="range"] {
   }
   .hero-visual {
     width: 56%;
-    right: -6%;
+    right: 0;
   }
   .hero-footnote {
     font-size: 8px;
@@ -1028,7 +1213,7 @@ input[type="range"] {
   }
   .hero-visual {
     opacity: 0.7;
-    right: -12%;
+    right: 0;
   }
   .hero-footnote {
     font-size: 7px;
@@ -1134,7 +1319,7 @@ input[type="range"] {
     font-size: 11px;
   }
   .hero-panel {
-    min-height: 390px;
+    min-height: 470px;
   }
   .hero-copy {
     padding: 25px;
@@ -1159,12 +1344,15 @@ input[type="range"] {
     font-size: 7px;
   }
   .hero-visual {
-    top: 123px;
-    right: -25%;
+    top: 205px;
+    right: 0;
     height: 250px;
-    width: 95%;
-    opacity: 0.45;
+    width: 100%;
+    opacity: 0.62;
     pointer-events: none;
+  }
+  .hero-art-showcase {
+    inset: 4px;
   }
   .hero-coordinate,
   .floating-stat {
@@ -1311,9 +1499,33 @@ input[type="range"] {
   border-color: #789edf;
   transform: translateY(-3px);
 }
+.vehicle-card {
+  background: linear-gradient(160deg, #151d2c, #111722 72%);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+.vehicle-card:disabled {
+  opacity: 1;
+}
+.vehicle-card:hover:not(:disabled) {
+  border-color: var(--vehicle-color);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--vehicle-color) 14%, transparent);
+}
 .selection-card.selected {
   border-color: #8cabef;
   box-shadow: 0 0 0 1px #8cabef55;
+}
+.vehicle-card .selection-art {
+  height: 170px;
+  background:
+    radial-gradient(
+      ellipse at 52% 66%,
+      color-mix(in srgb, var(--vehicle-color) 22%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(145deg, #18263b, #111827 72%);
 }
 .selection-art {
   height: 155px;
@@ -1325,6 +1537,9 @@ input[type="range"] {
 .selection-art .arena-art {
   height: 100%;
   transform: scale(1.1);
+}
+.vehicle-card .selection-art .arena-art {
+  transform: scale(1.18);
 }
 .selection-tag {
   display: flex;
@@ -1859,6 +2074,9 @@ kbd {
   }
   .selection-art {
     height: 128px;
+  }
+  .vehicle-card .selection-art {
+    height: 142px;
   }
   .selection-copy {
     padding: 13px;

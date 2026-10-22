@@ -14,13 +14,14 @@ export function VehicleCard({
 }) {
   return (
     <button
-      className={`selection-card ${selected ? "selected" : ""}`}
+      className={`selection-card vehicle-card ${selected ? "selected" : ""}`}
       disabled={locked}
       onClick={onSelect}
       aria-pressed={selected}
+      style={{ "--vehicle-color": vehicle.color } as React.CSSProperties}
     >
       <div className="selection-art">
-        <ArenaArt mode="racing" color={vehicle.color} />
+        <ArenaArt mode="racing" color={vehicle.color} variant={vehicle.id} />
         <span className="selection-tag">
           {locked ? (
             <>
